@@ -1,681 +1,1134 @@
 <project_specification>
-  <project_name>Claude.ai Clone - AI Chat Interface</project_name>
+  <project_name>GameOn - Sports Matchmaking Platform MVP</project_name>
 
   <overview>
-    Build a fully functional clone of claude.ai, Anthropic's conversational AI interface. The application should
-    provide a clean, modern chat interface for interacting with Claude via the API, including features like
-    conversation management, artifact rendering, project organization, multiple model selection, and advanced
-    settings. The UI should closely match claude.ai's design using Tailwind CSS with a focus on excellent
-    user experience and responsive design.
+    Build a sports matchmaking platform that connects recreational players with similar skill levels to organize
+    and play games together. The platform solves the "cold start problem" in sports app adoption by helping
+    convert existing WhatsApp-based pickup games to a more robust digital platform. Players register their
+    interests, skills, and availability to join a matchmaking pool. The app acts as a lobby where users host
+    games, join others, rate players post-game, and venues can offer their facilities. Initial focus on one
+    city and three sports (basketball, soccer, tennis) to prove the core concept before expanding.
   </overview>
 
   <technology_stack>
-    <api_key>
-        You can use an API key located at /tmp/api-key for testing. You will not be allowed to read this file, but you can reference it in code.
-    </api_key>
     <frontend>
-      <framework>React with Vite</framework>
-      <styling>Tailwind CSS (via CDN)</styling>
-      <state_management>React hooks and context</state_management>
-      <routing>React Router for navigation</routing>
-      <markdown>React Markdown for message rendering</markdown>
-      <code_highlighting>Syntax highlighting for code blocks</code_highlighting>
-      <port>Only launch on port {frontend_port}</port>
+      <framework>Next.js 14 with App Router and TypeScript</framework>
+      <styling>Tailwind CSS with shadcn/ui components</styling>
+      <state_management>Zustand for global state, TanStack Query for server state</state_management>
+      <routing>Next.js App Router with route groups</routing>
+      <forms>React Hook Form with Zod validation</forms>
+      <maps>Google Maps API or Mapbox for location features</maps>
+      <port>Development on port 3000</port>
     </frontend>
     <backend>
-      <runtime>Node.js with Express</runtime>
-      <database>SQLite with better-sqlite3</database>
-      <api_integration>Claude API for chat completions</api_integration>
-      <streaming>Server-Sent Events for streaming responses</streaming>
+      <runtime>Next.js API Routes (serverless functions)</runtime>
+      <database>Supabase (PostgreSQL with Row Level Security)</database>
+      <authentication>Supabase Auth with email/password and OAuth</authentication>
+      <payments>Stripe for game payments and platform fees</payments>
+      <file_storage>Supabase Storage for profile photos and venue images</file_storage>
+      <geospatial>PostGIS extension for location-based queries</geospatial>
     </backend>
     <communication>
-      <api>RESTful endpoints</api>
-      <streaming>SSE for real-time message streaming</streaming>
-      <claude_api>Integration with Claude API using Anthropic SDK</claude_api>
+      <api>RESTful endpoints via Next.js API routes</api>
+      <realtime>Supabase Realtime for game updates (Phase 2)</realtime>
+      <notifications>Email via Supabase triggers, Push via OneSignal (Phase 2)</notifications>
     </communication>
   </technology_stack>
 
   <prerequisites>
     <environment_setup>
-      - Repository includes .env with VITE_ANTHROPIC_API_KEY configured
-      - Frontend dependencies pre-installed via pnpm
-      - Backend code goes in /server directory
-      - Install backend dependencies as needed
+      - Supabase project created with PostGIS extension enabled
+      - Stripe account with test API keys configured
+      - Google Maps API key for location services
+      - Environment variables configured in .env.local:
+        - NEXT_PUBLIC_SUPABASE_URL
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY
+        - SUPABASE_SERVICE_ROLE_KEY
+        - STRIPE_SECRET_KEY
+        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        - STRIPE_WEBHOOK_SECRET
+        - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     </environment_setup>
   </prerequisites>
 
   <core_features>
-    <chat_interface>
-      - Clean, centered chat layout with message bubbles
-      - Streaming message responses with typing indicator
-      - Markdown rendering with proper formatting
-      - Code blocks with syntax highlighting and copy button
-      - LaTeX/math equation rendering
-      - Image upload and display in messages
-      - Multi-turn conversations with context
-      - Message editing and regeneration
-      - Stop generation button during streaming
-      - Input field with auto-resize textarea
-      - Character count and token estimation
-      - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
-    </chat_interface>
+    <player_management>
+      - Email/password registration with verification
+      - Profile setup: name, location (city/coordinates), phone, bio
+      - Profile photo upload with image optimization
+      - Sport selection (basketball, soccer, tennis initially)
+      - Skill level self-assessment per sport (1-5 scale with descriptions)
+      - Years of experience per sport
+      - Weekly availability calendar (recurring time slots)
+      - View and edit profile at any time
+      - Overall player rating display (calculated from peer reviews)
+      - Reliability score (based on attendance/no-shows)
+      - Games played counter
+      - Account settings (email, password, notifications)
+    </player_management>
 
-    <artifacts>
-      - Artifact detection and rendering in side panel
-      - Code artifact viewer with syntax highlighting
-      - HTML/SVG preview with live rendering
-      - React component preview
-      - Mermaid diagram rendering
-      - Text document artifacts
-      - Artifact editing and re-prompting
-      - Full-screen artifact view
-      - Download artifact content
-      - Artifact versioning and history
-    </artifacts>
+    <game_lobby_system>
+      <browse_games>
+        - View all available games in card/list view
+        - Filter by: sport type, date range, skill level, location radius
+        - Sort by: date (soonest), distance (nearest), skill match
+        - Visual game cards showing key details at a glance
+        - Map view showing game locations
+        - Quick preview of host and current participants
+        - Real-time player count and spots remaining
+        - Game status badges (open, almost full, full)
+      </browse_games>
 
-    <conversation_management>
-      - Create new conversations
-      - Conversation list in sidebar
-      - Rename conversations
-      - Delete conversations
-      - Search conversations by title/content
-      - Pin important conversations
-      - Archive conversations
-      - Conversation folders/organization
-      - Duplicate conversation
-      - Export conversation (JSON, Markdown, PDF)
-      - Conversation timestamps (created, last updated)
-      - Unread message indicators
-    </conversation_management>
+      <create_game>
+        - Multi-step form wizard for game creation
+        - Select sport from registered sports
+        - Choose date and time with calendar picker
+        - Set game duration (1hr, 1.5hr, 2hr options)
+        - Define skill level range (min-max on 1-5 scale)
+        - Select venue from registered venues or mark "TBD"
+        - Set maximum number of players
+        - Set cost per player (optional, $0-$50 range)
+        - Add notes/description for participants
+        - Preview game before publishing
+        - Edit game details until first player joins
+      </create_game>
 
-    <projects>
-      - Create projects to group related conversations
-      - Project knowledge base (upload documents)
-      - Project-specific custom instructions
-      - Share projects with team (mock feature)
-      - Project settings and configuration
-      - Move conversations between projects
-      - Project templates
-      - Project analytics (usage stats)
-    </projects>
+      <join_game>
+        - One-click join request button
+        - View game details, host profile, current players
+        - Skill level compatibility indicator
+        - Host approval required for joining
+        - Payment processed upon host approval
+        - Email confirmation with game details
+        - Add to calendar option (Google/Apple)
+        - Cancel request before approval (free)
+        - Cancel after approval with penalty policy
+      </join_game>
 
-    <model_selection>
-      - Model selector dropdown with the following models:
-        - Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) - default
-        - Claude Haiku 4.5 (claude-haiku-4-5-20251001)
-        - Claude Opus 4.1 (claude-opus-4-1-20250805)
-      - Model capabilities display
-      - Context window indicator
-      - Model-specific pricing info (display only)
-      - Switch models mid-conversation
-      - Model comparison view
-    </model_selection>
+      <game_states>
+        - Draft (created but not published)
+        - Open (accepting players, spots available)
+        - Full (maximum players reached, waitlist available)
+        - In Progress (game currently happening)
+        - Completed (game finished, ratings pending)
+        - Cancelled (by host, refunds processed)
+      </game_states>
 
-    <custom_instructions>
-      - Global custom instructions
-      - Project-specific custom instructions
-      - Conversation-specific system prompts
-      - Custom instruction templates
-      - Preview how instructions affect responses
-    </custom_instructions>
+      <host_controls>
+        - View join requests with player profiles
+        - Approve or reject players based on skill/ratings
+        - Message approved players (email)
+        - Cancel game with automatic refunds
+        - Mark game as completed
+        - Remove problematic players before game
+      </host_controls>
+    </game_lobby_system>
 
-    <settings_preferences>
-      - Theme selection (Light, Dark, Auto)
-      - Font size adjustment
-      - Message density (compact, comfortable, spacious)
-      - Code theme selection
-      - Language preferences
-      - Accessibility options
-      - Keyboard shortcuts reference
-      - Data export options
-      - Privacy settings
-      - API key management
-    </settings_preferences>
+    <venue_management>
+      <venue_registration>
+        - Venue owner registration flow
+        - Business verification (manual for MVP)
+        - Venue details: name, address, description
+        - Contact information and website
+        - Facility photos (up to 10 images)
+        - Amenities checklist (parking, showers, equipment, etc.)
+        - Operating hours
+      </venue_registration>
 
-    <advanced_features>
-      - Temperature control slider
-      - Max tokens adjustment
-      - Top-p (nucleus sampling) control
-      - System prompt override
-      - Thinking/reasoning mode toggle
-      - Multi-modal input (text + images)
-      - Voice input (optional, mock UI)
-      - Response suggestions
-      - Related prompts
-      - Conversation branching
-    </advanced_features>
+      <venue_sports>
+        - Configure available sports at venue
+        - Set hourly rates per sport/court
+        - Define capacity per facility
+        - Mark facilities as available/unavailable
+        - Seasonal pricing options
+      </venue_sports>
 
-    <collaboration>
-      - Share conversation via link (read-only)
-      - Export conversation formats
-      - Conversation templates
-      - Prompt library
-      - Share artifacts
-      - Team workspaces (mock UI)
-    </collaboration>
+      <venue_listing>
+        - Public venue directory with search
+        - Venue detail pages with photos gallery
+        - Available time slots display
+        - Sport-specific pricing information
+        - Distance from player's location
+        - Aggregate venue ratings
+        - Upcoming games at venue
+      </venue_listing>
+    </venue_management>
 
-    <search_discovery>
-      - Search across all conversations
-      - Filter by project, date, model
-      - Prompt library with categories
-      - Example conversations
-      - Quick actions menu
-      - Command palette (Cmd/Ctrl+K)
-    </search_discovery>
+    <payment_system>
+      <stripe_integration>
+        - Stripe Connect for marketplace payments
+        - Platform fee: 10-15% or $2-5 flat per transaction
+        - Payment processing on join approval
+        - Secure card storage for returning players
+        - Payment receipts via email
+      </stripe_integration>
 
-    <usage_tracking>
-      - Token usage display per message
-      - Conversation cost estimation
-      - Daily/monthly usage dashboard
-      - Usage limits and warnings
-      - API quota tracking
-    </usage_tracking>
+      <cancellation_policy>
+        - Full refund if cancelled >24 hours before game
+        - 50% refund if cancelled 12-24 hours before
+        - No refund if cancelled <12 hours (unless replacement found)
+        - Host cancellation triggers full refunds to all players
+        - Platform fee retained on player cancellations
+      </cancellation_policy>
 
-    <onboarding>
-      - Welcome screen for new users
-      - Feature tour highlights
-      - Example prompts to get started
-      - Quick tips and best practices
-      - Keyboard shortcuts tutorial
-    </onboarding>
+      <payment_history>
+        - View all past transactions
+        - Download receipts
+        - Refund status tracking
+        - Earnings summary for hosts
+      </payment_history>
+    </payment_system>
 
-    <accessibility>
-      - Full keyboard navigation
-      - Screen reader support
-      - ARIA labels and roles
-      - High contrast mode
-      - Focus management
-      - Reduced motion support
-    </accessibility>
+    <rating_system>
+      <post_game_ratings>
+        - Prompt to rate after game completion
+        - Rate each participant on three dimensions:
+          - Skill accuracy (1-5): Did their play match claimed skill?
+          - Reliability (1-5): On time, prepared, communicated
+          - Sportsmanship (1-5): Attitude, fair play, friendliness
+        - Optional text feedback (private to recipient)
+        - Anonymous aggregate display
+        - 48-hour window to submit ratings
+      </post_game_ratings>
+
+      <venue_ratings>
+        - Rate venue after playing there
+        - Overall rating (1-5 stars)
+        - Specific feedback: cleanliness, facilities, staff
+        - Optional comment
+        - Photo upload option
+      </venue_ratings>
+
+      <rating_display>
+        - Player profiles show aggregate ratings
+        - Star display with review count
+        - Reliability badge for consistent players
+        - Venue ratings on listing pages
+        - Recent reviews carousel
+      </rating_display>
+    </rating_system>
+
+    <dashboard_features>
+      <player_dashboard>
+        - Upcoming games I'm playing in
+        - Games I'm hosting
+        - Pending join requests (as host)
+        - Recent activity feed
+        - Games to rate (post-game)
+        - Quick stats: games played, avg rating
+        - Recommended games based on sport/skill
+      </player_dashboard>
+
+      <venue_dashboard>
+        - Upcoming bookings calendar view
+        - Pending booking requests
+        - Revenue summary
+        - Recent ratings and reviews
+        - Player traffic analytics (basic)
+        - Facility management
+      </venue_dashboard>
+    </dashboard_features>
+
+    <search_and_discovery>
+      - Global search for games, players, venues
+      - Location-based game discovery
+      - Sport category filtering
+      - Skill-matched game suggestions
+      - "Games near me" quick filter
+      - Popular venues in area
+      - Featured/promoted games (future)
+    </search_and_discovery>
+
+    <notifications_system>
+      <email_notifications>
+        - Welcome email on registration
+        - Game join request received (to host)
+        - Join request approved/rejected (to player)
+        - Payment confirmation
+        - Game reminder (24hr, 2hr before)
+        - Game cancelled notification
+        - Rating request post-game
+        - Weekly digest of nearby games (optional)
+      </email_notifications>
+
+      <in_app_notifications>
+        - Notification bell in header
+        - Unread count badge
+        - Notification center dropdown
+        - Mark as read functionality
+        - Notification preferences in settings
+      </in_app_notifications>
+    </notifications_system>
+
+    <settings_and_preferences>
+      - Account settings (email, password, phone)
+      - Profile visibility options
+      - Notification preferences (email, push)
+      - Default sport and skill display
+      - Location settings
+      - Delete account option
+      - Export personal data (GDPR compliance)
+    </settings_and_preferences>
 
     <responsive_design>
       - Mobile-first responsive layout
-      - Touch-optimized interface
-      - Collapsible sidebar on mobile
-      - Swipe gestures for navigation
-      - Adaptive artifact display
+      - Touch-optimized interface for all interactions
+      - Bottom navigation on mobile
+      - Swipe gestures for game cards
       - Progressive Web App (PWA) support
+      - Offline indicator
+      - Pull-to-refresh on lists
     </responsive_design>
+
+    <accessibility>
+      - Full keyboard navigation
+      - Screen reader support with ARIA labels
+      - High contrast mode support
+      - Focus management and indicators
+      - Form error announcements
+      - Skip navigation links
+    </accessibility>
   </core_features>
 
   <database_schema>
     <tables>
-      <users>
-        - id, email, name, avatar_url
-        - created_at, last_login
-        - preferences (JSON: theme, font_size, etc.)
-        - custom_instructions
-      </users>
+      <players>
+        - id (uuid, primary key, references auth.users)
+        - email (text, unique, not null)
+        - full_name (text, not null)
+        - phone (text)
+        - bio (text, max 500 chars)
+        - avatar_url (text)
+        - location_city (text)
+        - location_lat (decimal)
+        - location_lng (decimal)
+        - overall_rating (decimal, default 0)
+        - reliability_score (decimal, default 100)
+        - total_games_played (integer, default 0)
+        - created_at (timestamptz, default now())
+        - updated_at (timestamptz)
+        - is_venue_owner (boolean, default false)
+        - stripe_customer_id (text)
+        - notification_preferences (jsonb)
+      </players>
 
-      <projects>
-        - id, user_id, name, description, color
-        - custom_instructions, knowledge_base_path
-        - created_at, updated_at
-        - is_archived, is_pinned
-      </projects>
+      <sports>
+        - id (uuid, primary key)
+        - name (text, unique, not null) -- basketball, soccer, tennis
+        - display_name (text, not null)
+        - icon (text) -- icon identifier
+        - default_team_size (integer)
+        - description (text)
+        - is_active (boolean, default true)
+      </sports>
 
-      <conversations>
-        - id, user_id, project_id, title
-        - model, created_at, updated_at, last_message_at
-        - is_archived, is_pinned, is_deleted
-        - settings (JSON: temperature, max_tokens, etc.)
-        - token_count, message_count
-      </conversations>
+      <player_sports>
+        - id (uuid, primary key)
+        - player_id (uuid, references players, not null)
+        - sport_id (uuid, references sports, not null)
+        - skill_level (integer, 1-5, not null)
+        - years_experience (integer, default 0)
+        - is_primary (boolean, default false)
+        - created_at (timestamptz, default now())
+        - unique constraint (player_id, sport_id)
+      </player_sports>
 
-      <messages>
-        - id, conversation_id, role (user/assistant/system)
-        - content, created_at, edited_at
-        - tokens, finish_reason
-        - images (JSON array of image data)
-        - parent_message_id (for branching)
-      </messages>
+      <player_availability>
+        - id (uuid, primary key)
+        - player_id (uuid, references players, not null)
+        - day_of_week (integer, 0-6, not null) -- 0=Sunday
+        - start_time (time, not null)
+        - end_time (time, not null)
+        - is_active (boolean, default true)
+        - created_at (timestamptz, default now())
+      </player_availability>
 
-      <artifacts>
-        - id, message_id, conversation_id
-        - type (code/html/svg/react/mermaid/text)
-        - title, identifier, language
-        - content, version
-        - created_at, updated_at
-      </artifacts>
+      <venues>
+        - id (uuid, primary key)
+        - owner_id (uuid, references players)
+        - name (text, not null)
+        - description (text)
+        - address (text, not null)
+        - city (text, not null)
+        - state (text)
+        - postal_code (text)
+        - country (text, default 'US')
+        - location_lat (decimal, not null)
+        - location_lng (decimal, not null)
+        - phone (text)
+        - email (text)
+        - website (text)
+        - amenities (jsonb) -- {parking: true, showers: true, ...}
+        - images (jsonb) -- array of image URLs
+        - operating_hours (jsonb) -- {monday: {open: "06:00", close: "22:00"}, ...}
+        - overall_rating (decimal, default 0)
+        - total_ratings (integer, default 0)
+        - is_verified (boolean, default false)
+        - is_active (boolean, default true)
+        - created_at (timestamptz, default now())
+        - updated_at (timestamptz)
+        - stripe_account_id (text)
+      </venues>
 
-      <shared_conversations>
-        - id, conversation_id, share_token
-        - created_at, expires_at, view_count
-        - is_public
-      </shared_conversations>
+      <venue_sports>
+        - id (uuid, primary key)
+        - venue_id (uuid, references venues, not null)
+        - sport_id (uuid, references sports, not null)
+        - hourly_rate (decimal, not null)
+        - capacity (integer, not null) -- max players
+        - court_count (integer, default 1)
+        - equipment_available (boolean, default false)
+        - is_available (boolean, default true)
+        - created_at (timestamptz, default now())
+        - unique constraint (venue_id, sport_id)
+      </venue_sports>
 
-      <prompt_library>
-        - id, user_id, title, description
-        - prompt_template, category, tags (JSON)
-        - is_public, usage_count
-        - created_at, updated_at
-      </prompt_library>
+      <games>
+        - id (uuid, primary key)
+        - host_id (uuid, references players, not null)
+        - sport_id (uuid, references sports, not null)
+        - venue_id (uuid, references venues) -- nullable for TBD
+        - title (text) -- auto-generated if not provided
+        - description (text, max 1000 chars)
+        - game_date (date, not null)
+        - start_time (time, not null)
+        - end_time (time, not null)
+        - skill_level_min (integer, 1-5, not null)
+        - skill_level_max (integer, 1-5, not null)
+        - max_players (integer, not null)
+        - current_player_count (integer, default 1) -- includes host
+        - cost_per_player (decimal, default 0)
+        - venue_cost (decimal) -- total venue booking cost
+        - status (text, not null) -- draft, open, full, in_progress, completed, cancelled
+        - cancellation_reason (text)
+        - notes (text)
+        - created_at (timestamptz, default now())
+        - updated_at (timestamptz)
+        - completed_at (timestamptz)
+      </games>
 
-      <conversation_folders>
-        - id, user_id, project_id, name, parent_folder_id
-        - created_at, position
-      </conversation_folders>
+      <game_participants>
+        - id (uuid, primary key)
+        - game_id (uuid, references games, not null)
+        - player_id (uuid, references players, not null)
+        - status (text, not null) -- pending, confirmed, cancelled, no_show, completed
+        - payment_status (text) -- pending, paid, refunded, forfeited
+        - payment_amount (decimal)
+        - payment_intent_id (text) -- Stripe payment intent
+        - joined_at (timestamptz, default now())
+        - approved_at (timestamptz)
+        - cancelled_at (timestamptz)
+        - cancellation_reason (text)
+        - has_rated (boolean, default false)
+        - unique constraint (game_id, player_id)
+      </game_participants>
 
-      <conversation_folder_items>
-        - id, folder_id, conversation_id
-      </conversation_folder_items>
+      <player_ratings>
+        - id (uuid, primary key)
+        - game_id (uuid, references games, not null)
+        - rater_id (uuid, references players, not null)
+        - rated_player_id (uuid, references players, not null)
+        - skill_rating (integer, 1-5, not null)
+        - reliability_rating (integer, 1-5, not null)
+        - sportsmanship_rating (integer, 1-5, not null)
+        - comment (text, max 500 chars)
+        - created_at (timestamptz, default now())
+        - unique constraint (game_id, rater_id, rated_player_id)
+      </player_ratings>
 
-      <usage_tracking>
-        - id, user_id, conversation_id, message_id
-        - model, input_tokens, output_tokens
-        - cost_estimate, created_at
-      </usage_tracking>
+      <venue_ratings>
+        - id (uuid, primary key)
+        - venue_id (uuid, references venues, not null)
+        - player_id (uuid, references players, not null)
+        - game_id (uuid, references games)
+        - rating (integer, 1-5, not null)
+        - cleanliness (integer, 1-5)
+        - facilities (integer, 1-5)
+        - staff (integer, 1-5)
+        - comment (text, max 500 chars)
+        - images (jsonb) -- array of image URLs
+        - created_at (timestamptz, default now())
+        - unique constraint (venue_id, player_id, game_id)
+      </venue_ratings>
 
-      <api_keys>
-        - id, user_id, key_name, api_key_hash
-        - created_at, last_used_at
-        - is_active
-      </api_keys>
+      <notifications>
+        - id (uuid, primary key)
+        - player_id (uuid, references players, not null)
+        - type (text, not null) -- join_request, approved, game_reminder, etc.
+        - title (text, not null)
+        - message (text, not null)
+        - data (jsonb) -- additional context (game_id, etc.)
+        - is_read (boolean, default false)
+        - created_at (timestamptz, default now())
+      </notifications>
+
+      <payments>
+        - id (uuid, primary key)
+        - player_id (uuid, references players, not null)
+        - game_id (uuid, references games, not null)
+        - participant_id (uuid, references game_participants, not null)
+        - amount (decimal, not null)
+        - platform_fee (decimal, not null)
+        - net_amount (decimal, not null) -- amount minus fee
+        - currency (text, default 'usd')
+        - status (text, not null) -- pending, succeeded, failed, refunded
+        - stripe_payment_intent_id (text)
+        - stripe_charge_id (text)
+        - refund_amount (decimal)
+        - refund_reason (text)
+        - created_at (timestamptz, default now())
+        - updated_at (timestamptz)
+      </payments>
     </tables>
+
+    <indexes>
+      - games: sport_id, venue_id, host_id, game_date, status
+      - game_participants: game_id, player_id, status
+      - player_sports: player_id, sport_id
+      - player_availability: player_id, day_of_week
+      - player_ratings: rated_player_id, game_id
+      - venue_ratings: venue_id
+      - notifications: player_id, is_read, created_at
+      - payments: player_id, game_id, status
+      - Spatial index on venues (location_lat, location_lng)
+      - Spatial index on games via venue location
+    </indexes>
+
+    <row_level_security>
+      - Players can read all players (public profiles)
+      - Players can update only their own profile
+      - Players can read all games
+      - Only hosts can update/delete their own games
+      - Players can see their own participation records
+      - Hosts can see all participants for their games
+      - Ratings are readable by the rated player only
+      - Payment records visible only to the payer
+      - Notifications visible only to recipient
+    </row_level_security>
   </database_schema>
 
   <api_endpoints_summary>
     <authentication>
-      - POST /api/auth/login
-      - POST /api/auth/logout
-      - GET /api/auth/me
-      - PUT /api/auth/profile
+      - POST /api/auth/register - Create new player account
+      - POST /api/auth/login - Sign in with email/password
+      - POST /api/auth/logout - Sign out current session
+      - POST /api/auth/forgot-password - Request password reset
+      - POST /api/auth/reset-password - Reset password with token
+      - GET /api/auth/me - Get current user profile
     </authentication>
 
-    <conversations>
-      - GET /api/conversations
-      - POST /api/conversations
-      - GET /api/conversations/:id
-      - PUT /api/conversations/:id
-      - DELETE /api/conversations/:id
-      - POST /api/conversations/:id/duplicate
-      - POST /api/conversations/:id/export
-      - PUT /api/conversations/:id/archive
-      - PUT /api/conversations/:id/pin
-      - POST /api/conversations/:id/branch
-    </conversations>
+    <players>
+      - GET /api/players - List players (with filters)
+      - GET /api/players/:id - Get player profile
+      - PUT /api/players/:id - Update player profile
+      - GET /api/players/:id/stats - Get player statistics
+      - GET /api/players/:id/games - Get player's games
+      - GET /api/players/:id/ratings - Get player's received ratings
+      - POST /api/players/:id/avatar - Upload profile photo
+      - DELETE /api/players/:id - Delete account (soft delete)
+    </players>
 
-    <messages>
-      - GET /api/conversations/:id/messages
-      - POST /api/conversations/:id/messages
-      - PUT /api/messages/:id
-      - DELETE /api/messages/:id
-      - POST /api/messages/:id/regenerate
-      - GET /api/messages/stream (SSE endpoint)
-    </messages>
+    <player_sports>
+      - GET /api/players/:id/sports - Get player's sports
+      - POST /api/players/:id/sports - Add sport to player
+      - PUT /api/players/:id/sports/:sportId - Update skill level
+      - DELETE /api/players/:id/sports/:sportId - Remove sport
+    </player_sports>
 
-    <artifacts>
-      - GET /api/conversations/:id/artifacts
-      - GET /api/artifacts/:id
-      - PUT /api/artifacts/:id
-      - DELETE /api/artifacts/:id
-      - POST /api/artifacts/:id/fork
-      - GET /api/artifacts/:id/versions
-    </artifacts>
+    <player_availability>
+      - GET /api/players/:id/availability - Get availability slots
+      - POST /api/players/:id/availability - Add availability slot
+      - PUT /api/players/:id/availability/:slotId - Update slot
+      - DELETE /api/players/:id/availability/:slotId - Remove slot
+      - PUT /api/players/:id/availability/bulk - Bulk update availability
+    </player_availability>
 
-    <projects>
-      - GET /api/projects
-      - POST /api/projects
-      - GET /api/projects/:id
-      - PUT /api/projects/:id
-      - DELETE /api/projects/:id
-      - POST /api/projects/:id/knowledge
-      - GET /api/projects/:id/conversations
-      - PUT /api/projects/:id/settings
-    </projects>
+    <venues>
+      - GET /api/venues - List venues (with location filter)
+      - GET /api/venues/:id - Get venue details
+      - POST /api/venues - Create new venue
+      - PUT /api/venues/:id - Update venue
+      - DELETE /api/venues/:id - Delete venue
+      - GET /api/venues/:id/sports - Get venue's sports
+      - POST /api/venues/:id/sports - Add sport to venue
+      - GET /api/venues/:id/games - Get games at venue
+      - GET /api/venues/:id/ratings - Get venue ratings
+      - POST /api/venues/:id/images - Upload venue images
+    </venues>
 
-    <sharing>
-      - POST /api/conversations/:id/share
-      - GET /api/share/:token
-      - DELETE /api/share/:token
-      - PUT /api/share/:token/settings
-    </sharing>
+    <games>
+      - GET /api/games - List games (with filters)
+      - GET /api/games/:id - Get game details
+      - POST /api/games - Create new game
+      - PUT /api/games/:id - Update game
+      - DELETE /api/games/:id - Cancel/delete game
+      - POST /api/games/:id/join - Request to join game
+      - POST /api/games/:id/approve/:playerId - Approve join request
+      - POST /api/games/:id/reject/:playerId - Reject join request
+      - POST /api/games/:id/leave - Leave game
+      - POST /api/games/:id/complete - Mark game as completed
+      - GET /api/games/:id/participants - Get participants list
+      - GET /api/games/recommended - Get recommended games
+      - GET /api/games/nearby - Get games near location
+    </games>
 
-    <prompts>
-      - GET /api/prompts/library
-      - POST /api/prompts/library
-      - GET /api/prompts/:id
-      - PUT /api/prompts/:id
-      - DELETE /api/prompts/:id
-      - GET /api/prompts/categories
-      - GET /api/prompts/examples
-    </prompts>
+    <ratings>
+      - GET /api/games/:id/ratings - Get ratings for a game
+      - POST /api/games/:id/ratings - Submit player ratings
+      - GET /api/ratings/pending - Get games pending my ratings
+      - POST /api/venues/:id/ratings - Submit venue rating
+    </ratings>
+
+    <payments>
+      - POST /api/payments/create-intent - Create Stripe payment intent
+      - POST /api/payments/confirm - Confirm payment
+      - POST /api/payments/refund/:id - Request refund
+      - GET /api/payments/history - Get payment history
+      - POST /api/webhooks/stripe - Stripe webhook handler
+    </payments>
+
+    <notifications>
+      - GET /api/notifications - Get user notifications
+      - PUT /api/notifications/:id/read - Mark as read
+      - PUT /api/notifications/read-all - Mark all as read
+      - DELETE /api/notifications/:id - Delete notification
+      - GET /api/notifications/unread-count - Get unread count
+    </notifications>
 
     <search>
-      - GET /api/search/conversations?q=query
-      - GET /api/search/messages?q=query
-      - GET /api/search/artifacts?q=query
-      - GET /api/search/prompts?q=query
+      - GET /api/search?q=query&type=all|games|players|venues
+      - GET /api/search/games - Search games with filters
+      - GET /api/search/players - Search players
+      - GET /api/search/venues - Search venues
     </search>
 
-    <folders>
-      - GET /api/folders
-      - POST /api/folders
-      - PUT /api/folders/:id
-      - DELETE /api/folders/:id
-      - POST /api/folders/:id/items
-      - DELETE /api/folders/:id/items/:conversationId
-    </folders>
-
-    <usage>
-      - GET /api/usage/daily
-      - GET /api/usage/monthly
-      - GET /api/usage/by-model
-      - GET /api/usage/conversations/:id
-    </usage>
-
-    <settings>
-      - GET /api/settings
-      - PUT /api/settings
-      - GET /api/settings/custom-instructions
-      - PUT /api/settings/custom-instructions
-    </settings>
-
-    <claude_api>
-      - POST /api/claude/chat (proxy to Claude API)
-      - POST /api/claude/chat/stream (streaming proxy)
-      - GET /api/claude/models
-      - POST /api/claude/images/upload
-    </claude_api>
+    <sports>
+      - GET /api/sports - List all available sports
+      - GET /api/sports/:id - Get sport details
+    </sports>
   </api_endpoints_summary>
 
   <ui_layout>
     <main_structure>
-      - Three-column layout: sidebar (conversations), main (chat), panel (artifacts)
-      - Collapsible sidebar with resize handle
-      - Responsive breakpoints: mobile (single column), tablet (two column), desktop (three column)
-      - Persistent header with project/model selector
-      - Bottom input area with send button and options
+      - Two-column layout on desktop: sidebar (navigation/filters), main content
+      - Single column on mobile with bottom navigation
+      - Persistent header with logo, search, notifications, profile
+      - Responsive breakpoints: mobile (<768px), tablet (768-1024px), desktop (>1024px)
     </main_structure>
 
-    <sidebar_left>
-      - New chat button (prominent)
-      - Project selector dropdown
-      - Search conversations input
-      - Conversations list (grouped by date: Today, Yesterday, Previous 7 days, etc.)
-      - Folder tree view (collapsible)
-      - Settings gear icon at bottom
-      - User profile at bottom
-    </sidebar_left>
+    <sidebar_navigation>
+      - Logo and app name
+      - Navigation links:
+        - Dashboard (home icon)
+        - Browse Games (search icon)
+        - Create Game (plus icon)
+        - My Games (calendar icon)
+        - Venues (location icon)
+        - Profile (user icon)
+      - Collapsible on tablet
+      - Hidden on mobile (use bottom nav)
+    </sidebar_navigation>
 
-    <main_chat_area>
-      - Conversation title (editable inline)
-      - Model selector badge
-      - Message history (scrollable)
-      - Welcome screen for new conversations
-      - Suggested prompts (empty state)
-      - Input area with formatting toolbar
-      - Attachment button for images
-      - Send button with loading state
-      - Stop generation button
-    </main_chat_area>
+    <mobile_bottom_nav>
+      - Home/Dashboard
+      - Browse Games
+      - Create Game (prominent center button)
+      - My Games
+      - Profile
+    </mobile_bottom_nav>
 
-    <artifacts_panel>
-      - Artifact header with title and type badge
-      - Code editor or preview pane
-      - Tabs for multiple artifacts
-      - Full-screen toggle
-      - Download button
-      - Edit/Re-prompt button
-      - Version selector
-      - Close panel button
-    </artifacts_panel>
+    <header>
+      - Logo (links to dashboard)
+      - Global search bar (games, players, venues)
+      - Notification bell with unread count
+      - User avatar with dropdown menu
+      - Mobile: hamburger menu for sidebar
+    </header>
 
-    <modals_overlays>
-      - Settings modal (tabbed interface)
-      - Share conversation modal
-      - Export options modal
-      - Project settings modal
-      - Prompt library modal
-      - Command palette overlay
-      - Keyboard shortcuts reference
-    </modals_overlays>
+    <page_layouts>
+      <browse_games_page>
+        - Filter bar: sport, date range, skill level, distance
+        - Toggle: list view / map view
+        - Game cards grid (responsive columns)
+        - Pagination or infinite scroll
+        - Empty state with CTA to create game
+      </browse_games_page>
+
+      <game_detail_page>
+        - Hero section: sport icon, title, date/time
+        - Key info: venue, skill range, spots remaining
+        - Host profile card
+        - Participants list with avatars
+        - Join button (sticky on mobile)
+        - Game description/notes
+        - Venue info (if selected)
+        - Map showing location
+      </game_detail_page>
+
+      <create_game_page>
+        - Multi-step form wizard
+        - Step indicators
+        - Form sections: sport, timing, location, details, pricing
+        - Preview before publish
+        - Mobile-optimized inputs
+      </create_game_page>
+
+      <dashboard_page>
+        - Welcome message with player name
+        - Quick stats cards (games played, rating, reliability)
+        - Upcoming games section (horizontal scroll)
+        - Games I'm hosting section
+        - Pending actions (approvals, ratings)
+        - Recommended games
+      </dashboard_page>
+
+      <profile_page>
+        - Avatar with edit overlay
+        - Name, location, bio
+        - Sports with skill badges
+        - Stats overview
+        - Recent games list
+        - Rating display
+        - Edit profile button
+      </profile_page>
+
+      <venue_detail_page>
+        - Photo gallery with lightbox
+        - Venue name and rating
+        - Address with map
+        - Contact information
+        - Available sports and pricing
+        - Amenities list
+        - Recent reviews
+        - Upcoming games at venue
+      </venue_detail_page>
+    </page_layouts>
+
+    <modals_and_overlays>
+      - Join game confirmation modal
+      - Cancel game confirmation
+      - Rate players post-game modal
+      - Rate venue modal
+      - Payment modal (Stripe Elements)
+      - Filter modal (mobile)
+      - Player quick view modal
+      - Settings modal
+    </modals_and_overlays>
   </ui_layout>
 
   <design_system>
     <color_palette>
-      - Primary: Orange/amber accent (#CC785C claude-style)
-      - Background: White (light mode), Dark gray (#1A1A1A dark mode)
-      - Surface: Light gray (#F5F5F5 light), Darker gray (#2A2A2A dark)
-      - Text: Near black (#1A1A1A light), Off-white (#E5E5E5 dark)
-      - Borders: Light gray (#E5E5E5 light), Dark gray (#404040 dark)
-      - Code blocks: Monaco editor theme
+      <!-- Primary: Energetic, sporty feel -->
+      <primary>hsl(217, 91%, 60%)</primary> <!-- Blue - trust, reliability -->
+      <secondary>hsl(142, 76%, 36%)</secondary> <!-- Green - success, go -->
+      <accent>hsl(38, 92%, 50%)</accent> <!-- Orange - energy, CTA -->
+      <destructive>hsl(0, 84%, 60%)</destructive> <!-- Red - errors, cancel -->
+      
+      <!-- Sport-specific accents -->
+      <basketball>hsl(24, 100%, 50%)</basketball> <!-- Orange -->
+      <soccer>hsl(142, 76%, 36%)</soccer> <!-- Green -->
+      <tennis>hsl(49, 100%, 50%)</tennis> <!-- Yellow -->
+      
+      <!-- Neutrals -->
+      <background>hsl(0, 0%, 100%)</background>
+      <foreground>hsl(222, 47%, 11%)</foreground>
+      <muted>hsl(210, 40%, 96%)</muted>
+      <border>hsl(214, 32%, 91%)</border>
+      
+      <!-- Dark mode variants -->
+      <dark_background>hsl(222, 47%, 11%)</dark_background>
+      <dark_foreground>hsl(210, 40%, 98%)</dark_foreground>
+      <dark_muted>hsl(217, 33%, 17%)</dark_muted>
     </color_palette>
 
     <typography>
-      - Sans-serif system font stack (Inter, SF Pro, Roboto, system-ui)
-      - Headings: font-semibold
+      - Font family: Inter, system-ui, sans-serif
+      - Headings: font-bold, tracking-tight
       - Body: font-normal, leading-relaxed
-      - Code: Monospace (JetBrains Mono, Consolas, Monaco)
-      - Message text: text-base (16px), comfortable line-height
+      - Small: font-medium, text-sm
+      - Display sizes: text-4xl (h1), text-2xl (h2), text-xl (h3), text-lg (h4)
+      - Body size: text-base (16px)
     </typography>
 
+    <spacing>
+      - Container max-width: 1280px
+      - Page padding: p-4 (mobile), p-6 (tablet), p-8 (desktop)
+      - Card padding: p-4 to p-6
+      - Section spacing: space-y-6 to space-y-8
+      - Component gap: gap-2 to gap-4
+    </spacing>
+
     <components>
-      <message_bubble>
-        - User messages: Right-aligned, subtle background
-        - Assistant messages: Left-aligned, no background
-        - Markdown formatting with proper spacing
-        - Inline code with bg-gray-100 background
-        - Code blocks with syntax highlighting
-        - Copy button on code blocks
-      </message_bubble>
+      <game_card>
+        - White background with subtle shadow
+        - Sport icon badge (top left)
+        - Date/time prominent display
+        - Skill level indicator (colored bar)
+        - Player count (e.g., "6/10 players")
+        - Host avatar (small)
+        - Cost badge (if applicable)
+        - Hover: lift shadow, highlight
+        - Click: navigate to game detail
+      </game_card>
+
+      <player_card>
+        - Avatar (circular, 48px)
+        - Name and location
+        - Primary sport badge
+        - Rating stars display
+        - Skill level for sport context
+        - Quick action buttons
+      </player_card>
+
+      <skill_badge>
+        - Rounded pill shape
+        - Color coded by level:
+          - 1 (Beginner): gray
+          - 2 (Novice): blue
+          - 3 (Intermediate): green
+          - 4 (Advanced): orange
+          - 5 (Expert): red/gold
+        - Icon + text label
+      </skill_badge>
+
+      <rating_display>
+        - 5-star visual (filled/empty)
+        - Numeric rating beside stars
+        - Review count in muted text
+        - Compact variant for cards
+      </rating_display>
+
+      <venue_card>
+        - Hero image (16:9 aspect)
+        - Venue name bold
+        - Sports available (icon badges)
+        - Distance from user
+        - Rating display
+        - Price range indicator
+      </venue_card>
 
       <buttons>
-        - Primary: Orange/amber background, white text, rounded
-        - Secondary: Border style with hover fill
-        - Icon buttons: Square with hover background
-        - Disabled state: Reduced opacity, no pointer events
+        - Primary: Blue background, white text
+        - Secondary: Border, transparent bg
+        - Accent: Orange background (CTAs)
+        - Ghost: No border, hover bg
+        - Sizes: sm, default, lg
+        - Disabled: 50% opacity
+        - Loading: spinner + "Loading..."
       </buttons>
 
       <inputs>
-        - Rounded borders with focus ring
-        - Textarea auto-resize
-        - Placeholder text in gray
-        - Error states in red
-        - Character counter
+        - Rounded borders (radius-md)
+        - Focus ring (blue)
+        - Error state (red border)
+        - Helper text below
+        - Label above or floating
       </inputs>
 
-      <cards>
-        - Subtle border or shadow
-        - Rounded corners (8px)
-        - Padding: p-4 to p-6
-        - Hover state: slight shadow increase
-      </cards>
+      <sport_selector>
+        - Toggle buttons for each sport
+        - Icon + name
+        - Selected state highlighted
+        - Multi-select for profile
+        - Single-select for game filters
+      </sport_selector>
+
+      <availability_calendar>
+        - Week view with time slots
+        - Drag to select time ranges
+        - Color for selected slots
+        - Clear button per slot
+        - Mobile: time picker per day
+      </availability_calendar>
+
+      <map_component>
+        - Google Maps / Mapbox integration
+        - Custom markers for games/venues
+        - Cluster markers at zoom out
+        - Info window on marker click
+        - "Games near me" radius circle
+      </map_component>
     </components>
 
     <animations>
-      - Smooth transitions (150-300ms)
-      - Fade in for new messages
-      - Slide in for sidebar
-      - Typing indicator animation
-      - Loading spinner for generation
-      - Skeleton loaders for content
+      - Page transitions: fade (150ms)
+      - Card hover: transform scale (100ms)
+      - Modal: slide up + fade (200ms)
+      - Skeleton loading: pulse animation
+      - Success: checkmark animation
+      - Error: shake animation
+      - Notifications: slide in from right
     </animations>
   </design_system>
 
   <key_interactions>
-    <message_flow>
-      1. User types message in input field
-      2. Optional: Attach images via button
-      3. Click send or press Enter
-      4. Message appears in chat immediately
-      5. Typing indicator shows while waiting
-      6. Response streams in word by word
-      7. Code blocks render with syntax highlighting
-      8. Artifacts detected and rendered in side panel
-      9. Message complete, enable regenerate option
-    </message_flow>
+    <registration_flow>
+      1. Land on homepage with value proposition
+      2. Click "Sign Up" button
+      3. Enter email and password
+      4. Verify email (click link)
+      5. Complete profile: name, location, photo
+      6. Select sports and skill levels
+      7. Set weekly availability (optional, can skip)
+      8. Arrive at dashboard with onboarding tips
+    </registration_flow>
 
-    <artifact_flow>
-      1. Assistant generates artifact in response
-      2. Artifact panel slides in from right
-      3. Content renders (code with highlighting or live preview)
-      4. User can edit artifact inline
-      5. "Re-prompt" button to iterate with Claude
-      6. Download or copy artifact content
-      7. Full-screen mode for detailed work
-      8. Close panel to return to chat focus
-    </artifact_flow>
+    <create_game_flow>
+      1. Click "Create Game" from nav/dashboard
+      2. Select sport from available options
+      3. Choose date and time with picker
+      4. Set duration
+      5. Define skill level range (slider)
+      6. Select venue or mark "TBD"
+      7. Set max players
+      8. Set cost per player (optional)
+      9. Add notes/description
+      10. Preview game details
+      11. Publish game
+      12. Arrive at game detail page as host
+    </create_game_flow>
 
-    <conversation_management>
-      1. Click "New Chat" to start fresh conversation
-      2. Conversations auto-save with first message
-      3. Auto-generate title from first exchange
-      4. Click title to rename inline
-      5. Drag conversations into folders
-      6. Right-click for context menu (pin, archive, delete, export)
-      7. Search filters conversations in real-time
-      8. Click conversation to switch context
-    </conversation_management>
+    <join_game_flow>
+      1. Browse games or search
+      2. Click game card to view details
+      3. Review game info, host, participants
+      4. Click "Request to Join"
+      5. Confirm skill level is accurate
+      6. Wait for host approval
+      7. Receive approval notification
+      8. Complete payment (if game has cost)
+      9. Receive confirmation email
+      10. Game appears in "My Games"
+    </join_game_flow>
+
+    <host_approval_flow>
+      1. Receive notification of join request
+      2. Navigate to game or click notification
+      3. View requesting player's profile
+      4. Check skill level, rating, reliability
+      5. Approve or reject with optional message
+      6. On approval, player is prompted to pay
+      7. Player appears in participants list
+    </host_approval_flow>
+
+    <post_game_rating_flow>
+      1. Game marked as completed (auto or manual)
+      2. Receive notification to rate players
+      3. Open rating modal/page
+      4. Rate each participant on 3 dimensions
+      5. Add optional text feedback
+      6. Submit ratings
+      7. Ratings reflected in player profiles
+      8. Optional: rate venue
+    </post_game_rating_flow>
+
+    <cancellation_flow>
+      1. Navigate to game in "My Games"
+      2. Click "Cancel" or "Leave Game"
+      3. Confirm cancellation
+      4. If <24hrs, see refund policy warning
+      5. Confirm understanding
+      6. Refund processed (if applicable)
+      7. Other participants notified
+      8. Game status updated or removed
+    </cancellation_flow>
   </key_interactions>
 
   <implementation_steps>
-    <step number="1">
-      <title>Setup Project Foundation and Database</title>
+    <week_1>
+      <title>Project Setup and Authentication</title>
       <tasks>
-        - Initialize Express server with SQLite database
-        - Set up Claude API client with streaming support
-        - Create database schema with migrations
-        - Implement authentication endpoints
-        - Set up basic CORS and middleware
-        - Create health check endpoint
+        - Initialize Next.js 14 project with TypeScript
+        - Configure Tailwind CSS and shadcn/ui
+        - Set up Supabase project and connection
+        - Create database schema migration
+        - Enable Row Level Security policies
+        - Implement authentication (register, login, logout)
+        - Build auth context and protected route wrapper
+        - Create basic layout components (header, nav, footer)
+        - Deploy initial version to Vercel
       </tasks>
-    </step>
+    </week_1>
 
-    <step number="2">
-      <title>Build Core Chat Interface</title>
+    <week_2>
+      <title>Player Profiles and Sports Setup</title>
       <tasks>
-        - Create main layout with sidebar and chat area
-        - Implement message display with markdown rendering
-        - Add streaming message support with SSE
-        - Build input area with auto-resize textarea
-        - Add code block syntax highlighting
-        - Implement stop generation functionality
-        - Add typing indicators and loading states
+        - Build player profile page (view and edit)
+        - Implement profile photo upload
+        - Create sport selection component
+        - Build skill level selector with descriptions
+        - Implement player sports CRUD
+        - Create weekly availability calendar component
+        - Build player availability management
+        - Add location search/autocomplete
+        - Create player card component
       </tasks>
-    </step>
+    </week_2>
 
-    <step number="3">
-      <title>Conversation Management</title>
+    <week_3>
+      <title>Game Lobby - Browse and Create</title>
       <tasks>
-        - Create conversation list in sidebar
-        - Implement new conversation creation
-        - Add conversation switching
-        - Build conversation rename functionality
-        - Implement delete with confirmation
-        - Add conversation search
-        - Create conversation grouping by date
+        - Build game listing page with cards
+        - Implement filters (sport, date, skill, location)
+        - Create game detail page
+        - Build create game form wizard
+        - Implement game CRUD endpoints
+        - Add date/time picker components
+        - Create skill range selector
+        - Build venue selector (dropdown)
+        - Implement game status management
       </tasks>
-    </step>
+    </week_3>
 
-    <step number="4">
-      <title>Artifacts System</title>
+    <week_4>
+      <title>Game Participation Flow</title>
       <tasks>
-        - Build artifact detection from Claude responses
-        - Create artifact rendering panel
-        - Implement code artifact viewer
-        - Add HTML/SVG live preview
-        - Build artifact editing interface
-        - Add artifact versioning
-        - Implement full-screen artifact view
+        - Implement join game request flow
+        - Build host approval/rejection system
+        - Create participant management UI
+        - Add leave game functionality
+        - Build game completion flow
+        - Create "My Games" dashboard section
+        - Implement game reminders (email)
+        - Add pending approvals notifications
+        - Build waitlist functionality (if time)
       </tasks>
-    </step>
+    </week_4>
 
-    <step number="5">
-      <title>Projects and Organization</title>
+    <week_5>
+      <title>Payments Integration</title>
       <tasks>
-        - Create projects CRUD endpoints
-        - Build project selector UI
-        - Implement project-specific custom instructions
-        - Add folder system for conversations
-        - Create drag-and-drop organization
-        - Build project settings panel
+        - Set up Stripe Connect account
+        - Implement payment intent creation
+        - Build Stripe Elements payment form
+        - Create webhook handler for payment events
+        - Implement refund logic
+        - Build payment history page
+        - Add platform fee calculation
+        - Create payment confirmation emails
+        - Test full payment flow
       </tasks>
-    </step>
+    </week_5>
 
-    <step number="6">
-      <title>Advanced Features</title>
+    <week_6>
+      <title>Rating System</title>
       <tasks>
-        - Add model selection dropdown
-        - Implement temperature and parameter controls
-        - Build image upload functionality
-        - Create message editing and regeneration
-        - Add conversation branching
-        - Implement export functionality
+        - Build post-game rating prompt
+        - Create player rating modal/page
+        - Implement rating submission API
+        - Build rating aggregation logic
+        - Update player profiles with ratings
+        - Create venue rating system
+        - Build "Games to Rate" list
+        - Implement rating display components
+        - Add reliability score calculation
       </tasks>
-    </step>
+    </week_6>
 
-    <step number="7">
-      <title>Settings and Customization</title>
+    <week_7>
+      <title>Venues and Polish</title>
       <tasks>
-        - Build settings modal with tabs
-        - Implement theme switching (light/dark)
-        - Add custom instructions management
-        - Create keyboard shortcuts
-        - Build prompt library
-        - Add usage tracking dashboard
+        - Build venue registration flow
+        - Create venue listing page
+        - Build venue detail page
+        - Implement venue search by location
+        - Add venue photo gallery
+        - Create venue ratings display
+        - Build basic venue dashboard
+        - Add map integration for venues
+        - Polish responsive design
       </tasks>
-    </step>
+    </week_7>
 
-    <step number="8">
-      <title>Sharing and Collaboration</title>
+    <week_8>
+      <title>Final Polish and Launch Prep</title>
       <tasks>
-        - Implement conversation sharing with tokens
-        - Create public share view
-        - Add export to multiple formats
-        - Build prompt templates
-        - Create example conversations
+        - Comprehensive mobile testing
+        - Accessibility audit and fixes
+        - Performance optimization
+        - Error handling improvements
+        - Loading states and skeletons
+        - Empty states design
+        - PWA configuration
+        - SEO meta tags
+        - Create seed data for demo
+        - Beta user onboarding
+        - Production deployment
       </tasks>
-    </step>
-
-    <step number="9">
-      <title>Polish and Optimization</title>
-      <tasks>
-        - Optimize for mobile responsiveness
-        - Add command palette (Cmd+K)
-        - Implement comprehensive keyboard navigation
-        - Add onboarding flow
-        - Create accessibility improvements
-        - Performance optimization and caching
-      </tasks>
-    </step>
+    </week_8>
   </implementation_steps>
 
   <success_criteria>
     <functionality>
-      - Streaming chat responses work smoothly
-      - Artifact detection and rendering accurate
-      - Conversation management intuitive and reliable
-      - Project organization clear and useful
-      - Image upload and display working
-      - All CRUD operations functional
+      - Users can register, verify email, complete profile
+      - Players can set sports, skill levels, availability
+      - Games can be created, browsed, filtered, joined
+      - Host approval workflow functions correctly
+      - Payments process successfully via Stripe
+      - Ratings can be submitted post-game
+      - Venues can register and be selected for games
+      - Notifications delivered via email
     </functionality>
 
     <user_experience>
-      - Interface matches claude.ai design language
-      - Responsive on all device sizes
-      - Smooth animations and transitions
-      - Fast response times and minimal lag
-      - Intuitive navigation and workflows
-      - Clear feedback for all actions
+      - Pages load in under 2 seconds
+      - Mobile experience is native-like
+      - Forms have clear validation feedback
+      - Navigation is intuitive on all devices
+      - Error states are helpful and actionable
+      - Empty states guide users to take action
     </user_experience>
 
-    <technical_quality>
-      - Clean, maintainable code structure
-      - Proper error handling throughout
-      - Secure API key management
-      - Optimized database queries
-      - Efficient streaming implementation
-      - Comprehensive testing coverage
-    </technical_quality>
+    <business_metrics>
+      - 100+ players registered
+      - 5+ venues onboarded
+      - 20+ games created per week
+      - 70%+ game fill rate
+      - 60%+ rating completion rate
+      - Less than 5% API error rate
+    </business_metrics>
 
-    <design_polish>
-      - Consistent with claude.ai visual design
-      - Beautiful typography and spacing
-      - Smooth animations and micro-interactions
-      - Excellent contrast and accessibility
-      - Professional, polished appearance
-      - Dark mode fully implemented
-    </design_polish>
+    <technical_quality>
+      - TypeScript strict mode with no errors
+      - Row Level Security on all tables
+      - All API endpoints require authentication where needed
+      - Input validation on client and server
+      - Responsive design tested on common devices
+      - Core Web Vitals in green range
+    </technical_quality>
   </success_criteria>
+
+  <future_phases>
+    <phase_2_enhanced_matching>
+      - Smart game suggestions algorithm
+      - Push notifications
+      - Waitlist with auto-promotion
+      - One-click recurring games
+      - Calendar integration (Google/Apple)
+      - Friend/favorite players feature
+    </phase_2_enhanced_matching>
+
+    <phase_3_gamification>
+      - Detailed player stats dashboard
+      - Achievement badges
+      - Local leaderboards
+      - Skill progression tracking
+      - Verified skill levels
+    </phase_3_gamification>
+
+    <phase_4_venue_marketplace>
+      - Venue bidding system
+      - Premium venue listings
+      - Integrated booking system
+      - Equipment rental add-ons
+    </phase_4_venue_marketplace>
+
+    <phase_5_teams_and_leagues>
+      - Permanent team creation
+      - Team management
+      - League and tournament system
+      - In-app messaging
+      - Social feed
+    </phase_5_teams_and_leagues>
+  </future_phases>
 </project_specification>
