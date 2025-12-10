@@ -1,1134 +1,1248 @@
 <project_specification>
-  <project_name>GameOn - Sports Matchmaking Platform MVP</project_name>
+  <project_name>GameOn - Football Matchmaking Platform</project_name>
 
   <overview>
-    Build a sports matchmaking platform that connects recreational players with similar skill levels to organize
-    and play games together. The platform solves the "cold start problem" in sports app adoption by helping
-    convert existing WhatsApp-based pickup games to a more robust digital platform. Players register their
-    interests, skills, and availability to join a matchmaking pool. The app acts as a lobby where users host
-    games, join others, rate players post-game, and venues can offer their facilities. Initial focus on one
-    city and three sports (basketball, soccer, tennis) to prove the core concept before expanding.
+    A mobile-first platform that aggregates player interest in football games at specific venues and times,
+    then automatically creates games when sufficient interest exists. Players register their availability,
+    skill level, and preferred venues. The platform shows real-time demand signals (how many players want
+    to play at each venue/time). When thresholds are met, games are created and interested players are
+    notified to join the lobby. Supports both open games (anyone can join) and private games (host approval
+    required). Focus on football only for MVP to prove the concept.
   </overview>
 
+  <core_concept>
+    <interest_driven_matching>
+      Traditional sports apps require someone to host a game first, then hope others join.
+      This platform flips the model: players declare interest first, and games emerge organically
+      when enough people want to play at the same time and place. This solves the "cold start"
+      problem by showing demand before commitment.
+    </interest_driven_matching>
+    
+    <demand_visualization>
+      Players can see heatmaps of interest: "12 players want to play at Central Park on Saturday 2-4pm".
+      This transparency creates social proof and helps players find games that will actually happen.
+    </demand_visualization>
+  </core_concept>
+
   <technology_stack>
+    <philosophy>
+      All services run locally without external API dependencies during development.
+      No authentication complexity initially - use demo accounts for testing.
+      Mobile-first but web-based for Puppeteer testing compatibility.
+      Clean separation between frontend and backend for future scaling.
+    </philosophy>
+
     <frontend>
-      <framework>Next.js 14 with App Router and TypeScript</framework>
-      <styling>Tailwind CSS with shadcn/ui components</styling>
+      <framework>React 18 with TypeScript</framework>
+      <build_tool>Vite (fast HMR, excellent DX)</build_tool>
+      <routing>React Router v6</routing>
+      <styling>Tailwind CSS + Headless UI for accessible components</styling>
       <state_management>Zustand for global state, TanStack Query for server state</state_management>
-      <routing>Next.js App Router with route groups</routing>
-      <forms>React Hook Form with Zod validation</forms>
-      <maps>Google Maps API or Mapbox for location features</maps>
-      <port>Development on port 3000</port>
+      <forms>React Hook Form + Zod validation</forms>
+      <animations>Framer Motion for fluid mobile interactions</animations>
+      <icons>Lucide React (tree-shakeable, consistent)</icons>
+      <maps>Leaflet + React Leaflet (no API key required)</maps>
+      <mobile_wrapper>Capacitor (future - for app store deployment)</mobile_wrapper>
+      <testing>Puppeteer for E2E, Vitest for unit tests</testing>
+      <port>5173 (Vite default)</port>
     </frontend>
+
     <backend>
-      <runtime>Next.js API Routes (serverless functions)</runtime>
-      <database>Supabase (PostgreSQL with Row Level Security)</database>
-      <authentication>Supabase Auth with email/password and OAuth</authentication>
-      <payments>Stripe for game payments and platform fees</payments>
-      <file_storage>Supabase Storage for profile photos and venue images</file_storage>
-      <geospatial>PostGIS extension for location-based queries</geospatial>
+      <runtime>Node.js 20+ with TypeScript</runtime>
+      <framework>Fastify (faster than Express, TypeScript-first, great DX)</framework>
+      <database>SQLite with better-sqlite3 (synchronous, zero-config, local)</database>
+      <orm>Drizzle ORM (type-safe, lightweight, works great with SQLite)</orm>
+      <validation>Zod (shared schemas with frontend)</validation>
+      <file_storage>Local filesystem (./uploads directory)</file_storage>
+      <realtime>Server-Sent Events (SSE) for notifications</realtime>
+      <testing>Vitest for unit/integration tests</testing>
+      <port>3000</port>
     </backend>
-    <communication>
-      <api>RESTful endpoints via Next.js API routes</api>
-      <realtime>Supabase Realtime for game updates (Phase 2)</realtime>
-      <notifications>Email via Supabase triggers, Push via OneSignal (Phase 2)</notifications>
-    </communication>
+
+    <database_choice_rationale>
+      SQLite chosen for MVP because:
+      - Zero configuration, single file database
+      - No Docker or external services needed
+      - Instant setup on any machine
+      - Surprisingly powerful (handles millions of rows)
+      - Easy to inspect with DB Browser for SQLite
+      - Drizzle ORM makes migration to Postgres/Supabase trivial later
+      - Perfect for solo development and Puppeteer testing
+    </database_choice_rationale>
+
+    <future_migration_path>
+      When ready for production:
+      - Database: SQLite → Supabase PostgreSQL (Drizzle supports both)
+      - Auth: Demo users → Supabase Auth
+      - Storage: Local files → Supabase Storage
+      - Realtime: SSE → Supabase Realtime
+      - Mobile: PWA → Capacitor native apps
+    </future_migration_path>
+
+    <development_tools>
+      <package_manager>pnpm (fast, disk efficient)</package_manager>
+      <monorepo>Turborepo (shared types between frontend/backend)</monorepo>
+      <code_quality>ESLint + Prettier + TypeScript strict mode</code_quality>
+      <api_testing>Thunder Client or REST Client VS Code extension</api_testing>
+      <db_viewer>DB Browser for SQLite (GUI inspection)</db_viewer>
+    </development_tools>
   </technology_stack>
 
-  <prerequisites>
-    <environment_setup>
-      - Supabase project created with PostGIS extension enabled
-      - Stripe account with test API keys configured
-      - Google Maps API key for location services
-      - Environment variables configured in .env.local:
-        - NEXT_PUBLIC_SUPABASE_URL
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY
-        - SUPABASE_SERVICE_ROLE_KEY
-        - STRIPE_SECRET_KEY
-        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        - STRIPE_WEBHOOK_SECRET
-        - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    </environment_setup>
-  </prerequisites>
+  <project_structure>
+    <monorepo_layout>
+```
+gameon/
+├── apps/
+│   ├── web/                          # React frontend
+│   │   ├── src/
+│   │   │   ├── main.tsx
+│   │   │   ├── App.tsx
+│   │   │   ├── routes/               # Page components
+│   │   │   │   ├── index.tsx         # Home/Interest dashboard
+│   │   │   │   ├── venues/
+│   │   │   │   │   ├── index.tsx     # Browse venues
+│   │   │   │   │   └── [id].tsx      # Venue detail + interest
+│   │   │   │   ├── games/
+│   │   │   │   │   ├── index.tsx     # Active games list
+│   │   │   │   │   ├── [id].tsx      # Game lobby
+│   │   │   │   │   └── create.tsx    # Create private game
+│   │   │   │   ├── profile/
+│   │   │   │   │   ├── index.tsx     # My profile
+│   │   │   │   │   └── edit.tsx      # Edit profile
+│   │   │   │   ├── my-interests.tsx  # Manage my interests
+│   │   │   │   ├── my-games.tsx      # Games I'm in
+│   │   │   │   └── notifications.tsx # Notification center
+│   │   │   ├── components/
+│   │   │   │   ├── ui/               # Base UI components
+│   │   │   │   ├── layout/           # Shell, nav, headers
+│   │   │   │   ├── interest/         # Interest-related components
+│   │   │   │   ├── venues/           # Venue components
+│   │   │   │   ├── games/            # Game/lobby components
+│   │   │   │   └── players/          # Player components
+│   │   │   ├── hooks/                # Custom React hooks
+│   │   │   ├── stores/               # Zustand stores
+│   │   │   ├── services/             # API client functions
+│   │   │   ├── lib/                  # Utilities
+│   │   │   └── types/                # Frontend-specific types
+│   │   ├── public/
+│   │   ├── index.html
+│   │   ├── vite.config.ts
+│   │   ├── tailwind.config.ts
+│   │   └── package.json
+│   │
+│   └── api/                          # Fastify backend
+│       ├── src/
+│       │   ├── index.ts              # Server entry point
+│       │   ├── app.ts                # Fastify app setup
+│       │   ├── db/
+│       │   │   ├── index.ts          # Database connection
+│       │   │   ├── schema.ts         # Drizzle schema
+│       │   │   ├── migrate.ts        # Migration runner
+│       │   │   └── seed.ts           # Demo data seeder
+│       │   ├── routes/
+│       │   │   ├── players.ts
+│       │   │   ├── venues.ts
+│       │   │   ├── interests.ts
+│       │   │   ├── games.ts
+│       │   │   ├── notifications.ts
+│       │   │   └── demo.ts           # Demo/testing endpoints
+│       │   ├── services/
+│       │   │   ├── interest-matcher.ts   # Interest aggregation logic
+│       │   │   ├── game-creator.ts       # Auto game creation
+│       │   │   └── notification.ts       # SSE notifications
+│       │   └── lib/
+│       │       └── utils.ts
+│       ├── uploads/                  # Local file storage
+│       ├── data/                     # SQLite database file
+│       │   └── gameon.db
+│       └── package.json
+│
+├── packages/
+│   └── shared/                       # Shared code
+│       ├── src/
+│       │   ├── types.ts              # Shared TypeScript types
+│       │   ├── schemas.ts            # Shared Zod schemas
+│       │   └── constants.ts          # Shared constants
+│       └── package.json
+│
+├── tests/
+│   └── e2e/                          # Puppeteer E2E tests
+│       ├── flows/
+│       │   ├── interest-registration.test.ts
+│       │   ├── venue-browsing.test.ts
+│       │   ├── game-lobby.test.ts
+│       │   └── full-flow.test.ts
+│       └── setup.ts
+│
+├── turbo.json
+├── package.json
+├── pnpm-workspace.yaml
+└── README.md
+```
+    </monorepo_layout>
+  </project_structure>
+
+  <demo_and_testing_system>
+    <demo_accounts>
+      The system seeds with demo accounts for immediate testing without authentication.
+      Demo users are created on first run and can be switched via UI dropdown.
+      
+      <demo_users>
+        - demo_player_1: "Alex Johnson" - Skill 4, available weekends
+        - demo_player_2: "Sam Smith" - Skill 2, available weekday evenings  
+        - demo_player_3: "Jordan Lee" - Skill 5, available anytime
+        - demo_player_4: "Casey Brown" - Skill 3, available Saturday mornings
+        - demo_player_5: "Morgan Davis" - Skill 1, beginner, available Sunday
+        - demo_player_6: "Riley Taylor" - Skill 3, midweek evenings
+        - demo_player_7: "Jamie Garcia" - Skill 4, weekends only
+        - demo_player_8: "Drew Martinez" - Skill 2, flexible schedule
+        - demo_player_9: "Avery Wilson" - Skill 3, Saturday afternoons
+        - demo_player_10: "Quinn Anderson" - Skill 4, Sunday mornings
+        - demo_host_1: "Taylor Wilson" - Experienced host, creates private games
+        - demo_venue_admin: "River Park FC" - Venue administrator
+        (12+ demo players to simulate realistic interest levels)
+      </demo_users>
+    </demo_accounts>
+
+    <testing_endpoints>
+      GET  /api/demo/current-user            - Get current demo user
+      POST /api/demo/switch-user/:userId     - Switch current demo user
+      POST /api/demo/reset-database          - Reset to fresh seeded state
+      POST /api/demo/simulate-interests      - Add random interests for testing
+      POST /api/demo/trigger-game-creation   - Force check for game creation
+      GET  /api/demo/users                   - List all demo users
+    </testing_endpoints>
+
+    <puppeteer_compatibility>
+      - All interactions use standard HTML elements (buttons, inputs, links)
+      - Data attributes on key elements: data-testid="interest-button"
+      - No external API calls that could fail/timeout
+      - Predictable demo data for assertions
+      - API supports waiting for SSE notifications
+      - Deterministic behavior with seeded data
+    </puppeteer_compatibility>
+  </demo_and_testing_system>
 
   <core_features>
-    <player_management>
-      - Email/password registration with verification
-      - Profile setup: name, location (city/coordinates), phone, bio
-      - Profile photo upload with image optimization
-      - Sport selection (basketball, soccer, tennis initially)
-      - Skill level self-assessment per sport (1-5 scale with descriptions)
-      - Years of experience per sport
-      - Weekly availability calendar (recurring time slots)
-      - View and edit profile at any time
-      - Overall player rating display (calculated from peer reviews)
-      - Reliability score (based on attendance/no-shows)
-      - Games played counter
-      - Account settings (email, password, notifications)
-    </player_management>
+    <player_profile>
+      <registration>
+        - Simple profile: name, avatar (optional), bio
+        - Football skill level (1-5 scale with clear descriptions):
+          - 1: Complete Beginner (never played organized football)
+          - 2: Casual (played occasionally, learning basics)
+          - 3: Intermediate (regular player, comfortable with rules)
+          - 4: Advanced (competitive experience, skilled)
+          - 5: Expert (semi-pro or professional experience)
+        - Position preferences (can select multiple):
+          - Goalkeeper
+          - Defender
+          - Midfielder
+          - Forward
+          - Any/Flexible
+        - Play style tags (optional, select up to 3):
+          - Competitive, Casual, Social, Fitness-focused, Technical, Physical
+      </registration>
 
-    <game_lobby_system>
-      <browse_games>
-        - View all available games in card/list view
-        - Filter by: sport type, date range, skill level, location radius
-        - Sort by: date (soonest), distance (nearest), skill match
-        - Visual game cards showing key details at a glance
-        - Map view showing game locations
-        - Quick preview of host and current participants
-        - Real-time player count and spots remaining
-        - Game status badges (open, almost full, full)
-      </browse_games>
+      <profile_display>
+        - Avatar with fallback initials
+        - Name and skill badge
+        - Positions shown as icons
+        - Games played count
+        - Member since date
+        - Favourite venues list
+        - Reliability indicator (shows up rate)
+      </profile_display>
+    </player_profile>
 
-      <create_game>
-        - Multi-step form wizard for game creation
-        - Select sport from registered sports
-        - Choose date and time with calendar picker
-        - Set game duration (1hr, 1.5hr, 2hr options)
-        - Define skill level range (min-max on 1-5 scale)
-        - Select venue from registered venues or mark "TBD"
-        - Set maximum number of players
-        - Set cost per player (optional, $0-$50 range)
-        - Add notes/description for participants
-        - Preview game before publishing
-        - Edit game details until first player joins
-      </create_game>
+    <interest_registration_system>
+      <core_concept>
+        Players don't commit to games upfront. They register "interest" in playing
+        at specific venues during specific time windows. This is a soft commitment
+        that says "I'd be interested in a game if one happens here at this time."
+      </core_concept>
 
-      <join_game>
-        - One-click join request button
-        - View game details, host profile, current players
-        - Skill level compatibility indicator
-        - Host approval required for joining
-        - Payment processed upon host approval
-        - Email confirmation with game details
-        - Add to calendar option (Google/Apple)
-        - Cancel request before approval (free)
-        - Cancel after approval with penalty policy
-      </join_game>
+      <interest_declaration>
+        - Select venue from favourites or browse
+        - Choose day of week (or specific date)
+        - Choose time window (morning/afternoon/evening or specific hours)
+        - Set duration preference (1hr, 1.5hr, 2hr)
+        - Confirm skill level for this interest
+        - Set as recurring (every week) or one-time
+        - Optional: preferred game type (casual/competitive)
+      </interest_declaration>
 
-      <game_states>
-        - Draft (created but not published)
-        - Open (accepting players, spots available)
-        - Full (maximum players reached, waitlist available)
-        - In Progress (game currently happening)
-        - Completed (game finished, ratings pending)
-        - Cancelled (by host, refunds processed)
-      </game_states>
+      <interest_management>
+        - View all my active interests
+        - Edit interest details
+        - Pause interest temporarily
+        - Delete interest
+        - See which interests have nearby threshold
+        - Get notified when interest becomes a game
+      </interest_management>
 
-      <host_controls>
-        - View join requests with player profiles
-        - Approve or reject players based on skill/ratings
-        - Message approved players (email)
-        - Cancel game with automatic refunds
-        - Mark game as completed
-        - Remove problematic players before game
-      </host_controls>
-    </game_lobby_system>
+      <interest_aggregation_display>
+        When viewing a venue, players see aggregated interest data:
+        
+        ```
+        Central Park Football Pitch
+        ┌─────────────────────────────────────────────┐
+        │ Saturday Interest                           │
+        ├─────────────────────────────────────────────┤
+        │ Morning (9am-12pm)                          │
+        │ ████████████░░░░ 12 players interested      │
+        │ Skill range: 2-4  │  Threshold: 10 ✓        │
+        │ [Game forming! Join lobby →]                │
+        ├─────────────────────────────────────────────┤
+        │ Afternoon (2pm-5pm)                         │
+        │ ██████░░░░░░░░░░ 6 players interested       │
+        │ Skill range: 1-3  │  Threshold: 10          │
+        │ [Register interest]                         │
+        ├─────────────────────────────────────────────┤
+        │ Evening (6pm-9pm)                           │
+        │ ████░░░░░░░░░░░░ 4 players interested       │
+        │ Skill range: 3-5  │  Threshold: 10          │
+        │ [Register interest]                         │
+        └─────────────────────────────────────────────┘
+        ```
+      </interest_aggregation_display>
+    </interest_registration_system>
 
-    <venue_management>
-      <venue_registration>
-        - Venue owner registration flow
-        - Business verification (manual for MVP)
-        - Venue details: name, address, description
-        - Contact information and website
-        - Facility photos (up to 10 images)
-        - Amenities checklist (parking, showers, equipment, etc.)
+    <venue_system>
+      <venue_browsing>
+        - List view with cards showing venue details
+        - Map view showing all venues (using Leaflet, no API key needed)
+        - Filter by: amenities, pitch type
+        - Sort by: interest level (most active), name
+        - Search by name
+      </venue_browsing>
+
+      <venue_details_page>
+        - Hero image carousel
+        - Name, address, description
+        - Amenities list (parking, changing rooms, floodlights, etc.)
+        - Pitch details (grass/astro, size, indoor/outdoor)
         - Operating hours
+        - Interest heatmap by day/time
+        - Upcoming games at this venue
+        - Favourite button (heart icon)
+      </venue_details_page>
+
+      <favourite_venues>
+        - One-tap to favourite/unfavourite
+        - Favourite venues shown first in lists
+        - Quick-register interest from favourites
+        - Notification preferences per favourite venue
+        - "My Venues" section in profile
+      </favourite_venues>
+
+      <venue_registration>
+        Venues can register their facilities:
+        - Venue name and description
+        - Address (text input for local testing)
+        - Coordinates (lat/lng for map display)
+        - Photos (upload multiple to local storage)
+        - Pitch specifications
+        - Amenities checklist
+        - Available time slots
+        - Capacity (max players per booking)
+        - Minimum players for booking (threshold)
+        - Contact information
       </venue_registration>
 
-      <venue_sports>
-        - Configure available sports at venue
-        - Set hourly rates per sport/court
-        - Define capacity per facility
-        - Mark facilities as available/unavailable
-        - Seasonal pricing options
-      </venue_sports>
+      <venue_availability>
+        Venues set when their pitches are available:
+        - Weekly recurring slots
+        - Blocked dates (maintenance, private bookings)
+        - Capacity per slot
+        - Minimum booking threshold
+      </venue_availability>
+    </venue_system>
 
-      <venue_listing>
-        - Public venue directory with search
-        - Venue detail pages with photos gallery
-        - Available time slots display
-        - Sport-specific pricing information
-        - Distance from player's location
-        - Aggregate venue ratings
-        - Upcoming games at venue
-      </venue_listing>
-    </venue_management>
+    <game_creation_system>
+      <automatic_game_creation>
+        When interest at a venue/time reaches the threshold:
+        1. System detects threshold met
+        2. Creates an "Open Game" automatically
+        3. All interested players receive notification
+        4. Players have X hours to confirm (join lobby)
+        5. If minimum confirmed, game is locked in
+        6. If not enough confirm, game cancelled, interests remain
+      </automatic_game_creation>
 
-    <payment_system>
-      <stripe_integration>
-        - Stripe Connect for marketplace payments
-        - Platform fee: 10-15% or $2-5 flat per transaction
-        - Payment processing on join approval
-        - Secure card storage for returning players
-        - Payment receipts via email
-      </stripe_integration>
+      <game_types>
+        <open_game>
+          - Created automatically by system OR manually by player
+          - Anyone matching skill range can join
+          - No approval needed
+          - First-come-first-served up to capacity
+          - Visible to all players
+        </open_game>
 
-      <cancellation_policy>
-        - Full refund if cancelled >24 hours before game
-        - 50% refund if cancelled 12-24 hours before
-        - No refund if cancelled <12 hours (unless replacement found)
-        - Host cancellation triggers full refunds to all players
-        - Platform fee retained on player cancellations
-      </cancellation_policy>
+        <private_game>
+          - Created manually by a host
+          - Host sets requirements:
+            - Skill level range (min-max)
+            - Position requirements (need 1 goalkeeper, etc.)
+            - Invite-only OR apply-to-join
+          - Host approves/rejects applicants
+          - Can be visible (searchable) or hidden (invite link only)
+        </private_game>
+      </game_types>
 
-      <payment_history>
-        - View all past transactions
-        - Download receipts
-        - Refund status tracking
-        - Earnings summary for hosts
-      </payment_history>
-    </payment_system>
+      <game_thresholds>
+        Default thresholds (configurable per venue):
+        - 5-a-side: 8 players minimum (allows subs)
+        - 7-a-side: 12 players minimum
+        - 11-a-side: 18 players minimum
+        
+        Games become "confirmed" when minimum reached.
+        Games can accept up to maximum capacity.
+      </game_thresholds>
+    </game_creation_system>
 
-    <rating_system>
-      <post_game_ratings>
-        - Prompt to rate after game completion
-        - Rate each participant on three dimensions:
-          - Skill accuracy (1-5): Did their play match claimed skill?
-          - Reliability (1-5): On time, prepared, communicated
-          - Sportsmanship (1-5): Attitude, fair play, friendliness
-        - Optional text feedback (private to recipient)
-        - Anonymous aggregate display
-        - 48-hour window to submit ratings
-      </post_game_ratings>
+    <game_lobby>
+      <lobby_states>
+        - Forming: Created, accepting players, below minimum
+        - Confirmed: Minimum reached, game will happen
+        - Full: Maximum capacity reached
+        - In Progress: Game currently happening
+        - Completed: Game finished
+        - Cancelled: Not enough players or host cancelled
+      </lobby_states>
 
-      <venue_ratings>
-        - Rate venue after playing there
-        - Overall rating (1-5 stars)
-        - Specific feedback: cleanliness, facilities, staff
-        - Optional comment
-        - Photo upload option
-      </venue_ratings>
+      <lobby_interface>
+        - Game details header (venue, date, time, type)
+        - Player list with avatars, names, skill levels
+        - Position distribution visualization
+        - Chat/discussion area (simple messages)
+        - Join/Leave buttons
+        - Share link button
+        - Countdown to game start
+        - Host controls (for private games)
+      </lobby_interface>
 
-      <rating_display>
-        - Player profiles show aggregate ratings
-        - Star display with review count
-        - Reliability badge for consistent players
-        - Venue ratings on listing pages
-        - Recent reviews carousel
-      </rating_display>
-    </rating_system>
+      <host_controls>
+        For private game hosts:
+        - View pending applications with player profiles
+        - Approve/Reject applicants
+        - Remove players from lobby
+        - Edit game details (before confirmation)
+        - Cancel game (with notification to all)
+        - Promote another player to co-host
+      </host_controls>
 
-    <dashboard_features>
-      <player_dashboard>
-        - Upcoming games I'm playing in
-        - Games I'm hosting
-        - Pending join requests (as host)
-        - Recent activity feed
-        - Games to rate (post-game)
-        - Quick stats: games played, avg rating
-        - Recommended games based on sport/skill
-      </player_dashboard>
+      <player_actions>
+        - Join open game (instant)
+        - Apply to private game (await approval)
+        - Leave game (before start)
+        - Invite friends (share link)
+      </player_actions>
+    </game_lobby>
 
-      <venue_dashboard>
-        - Upcoming bookings calendar view
-        - Pending booking requests
-        - Revenue summary
-        - Recent ratings and reviews
-        - Player traffic analytics (basic)
-        - Facility management
-      </venue_dashboard>
-    </dashboard_features>
+    <notification_system>
+      <notification_types>
+        - interest_threshold: "Game forming at Central Park Saturday 2pm!"
+        - game_invitation: "You've been invited to join [Game Name]"
+        - application_approved: "You're in! See you at [Game]"
+        - application_rejected: "Sorry, [Game] is looking for different skill levels"
+        - game_confirmed: "[Game] has enough players - it's happening!"
+        - game_reminder: "[Game] starts in 2 hours"
+        - game_cancelled: "[Game] was cancelled due to insufficient players"
+        - player_joined: "[Player] joined [Game]"
+        - player_left: "[Player] left [Game]"
+      </notification_types>
 
-    <search_and_discovery>
-      - Global search for games, players, venues
-      - Location-based game discovery
-      - Sport category filtering
-      - Skill-matched game suggestions
-      - "Games near me" quick filter
-      - Popular venues in area
-      - Featured/promoted games (future)
-    </search_and_discovery>
-
-    <notifications_system>
-      <email_notifications>
-        - Welcome email on registration
-        - Game join request received (to host)
-        - Join request approved/rejected (to player)
-        - Payment confirmation
-        - Game reminder (24hr, 2hr before)
-        - Game cancelled notification
-        - Rating request post-game
-        - Weekly digest of nearby games (optional)
-      </email_notifications>
-
-      <in_app_notifications>
-        - Notification bell in header
-        - Unread count badge
-        - Notification center dropdown
+      <delivery_mechanism>
+        MVP uses Server-Sent Events (SSE) for real-time notifications:
+        - Connection established on app load
+        - Notifications pushed instantly
+        - Fallback polling every 30 seconds
+        - Notification bell shows unread count
+        - Click to view notification center
         - Mark as read functionality
-        - Notification preferences in settings
-      </in_app_notifications>
-    </notifications_system>
+      </delivery_mechanism>
 
-    <settings_and_preferences>
-      - Account settings (email, password, phone)
-      - Profile visibility options
-      - Notification preferences (email, push)
-      - Default sport and skill display
-      - Location settings
-      - Delete account option
-      - Export personal data (GDPR compliance)
-    </settings_and_preferences>
+      <notification_center>
+        - Chronological list of all notifications
+        - Unread highlighted
+        - Click notification to navigate to relevant page
+        - Clear all button
+        - Filter by type (optional)
+      </notification_center>
+    </notification_system>
 
-    <responsive_design>
-      - Mobile-first responsive layout
-      - Touch-optimized interface for all interactions
-      - Bottom navigation on mobile
-      - Swipe gestures for game cards
-      - Progressive Web App (PWA) support
-      - Offline indicator
-      - Pull-to-refresh on lists
-    </responsive_design>
+    <dashboard_home>
+      <player_dashboard>
+        When logged in (as demo user), home shows personalized dashboard:
+        
+        ```
+        Good evening, Alex! ⚽
+        
+        ┌─ Your Upcoming Games ─────────────────────┐
+        │ SAT │ Central Park 5-a-side │ 2pm │ [→]   │
+        │ SUN │ Riverside FC          │ 10am│ [→]   │
+        └───────────────────────────────────────────┘
+        
+        ┌─ Hot Right Now 🔥 ────────────────────────┐
+        │ 12 players want Saturday afternoon game   │
+        │ at Central Park - Join the interest! [+]  │
+        └───────────────────────────────────────────┘
+        
+        ┌─ My Active Interests ─────────────────────┐
+        │ ⚽ Central Park │ Saturdays │ 2-5pm       │
+        │ ⚽ Riverside FC  │ Sundays   │ 10am-1pm   │
+        │ [Manage interests →]                      │
+        └───────────────────────────────────────────┘
+        
+        ┌─ Favourite Venues ────────────────────────┐
+        │ ❤️ Central Park    │ 8 interested today   │
+        │ ❤️ Riverside FC     │ 3 interested today   │
+        │ [Browse all venues →]                     │
+        └───────────────────────────────────────────┘
+        ```
+      </player_dashboard>
+    </dashboard_home>
 
-    <accessibility>
-      - Full keyboard navigation
-      - Screen reader support with ARIA labels
-      - High contrast mode support
-      - Focus management and indicators
-      - Form error announcements
-      - Skip navigation links
-    </accessibility>
+    <discovery_features>
+      <interest_discovery>
+        - "Where's the action?" - venues sorted by current interest
+        - "Play this weekend" - high-interest time slots
+        - "My skill level" - filtered to appropriate games
+      </interest_discovery>
+
+      <game_discovery>
+        - Browse all open games
+        - Filter by: date, time, skill level, venue
+        - "Recommended for you" based on interests and skill
+        - Recently created games
+      </game_discovery>
+    </discovery_features>
+
+    <responsive_mobile_design>
+      <mobile_first_approach>
+        - Touch-optimized buttons (min 44px tap targets)
+        - Bottom navigation bar for primary actions
+        - Pull-to-refresh on lists
+        - Swipe gestures for cards
+        - Full-screen modals for forms
+        - Native-feeling animations
+        - Safe area handling for notched phones
+      </mobile_first_approach>
+
+      <navigation_structure>
+        Bottom nav (mobile):
+        - Home (dashboard)
+        - Venues (browse/favourites)
+        - + (quick add interest or create game)
+        - Games (my games)
+        - Profile
+
+        Sidebar nav (tablet/desktop):
+        - Same sections, expanded labels
+        - Notifications inline
+      </navigation_structure>
+
+      <gestures_and_interactions>
+        - Swipe left on interest to delete
+        - Swipe right on venue to favourite
+        - Long press player for quick profile
+        - Pull down to refresh
+      </gestures_and_interactions>
+    </responsive_mobile_design>
   </core_features>
 
   <database_schema>
     <tables>
       <players>
-        - id (uuid, primary key, references auth.users)
-        - email (text, unique, not null)
-        - full_name (text, not null)
-        - phone (text)
-        - bio (text, max 500 chars)
-        - avatar_url (text)
-        - location_city (text)
-        - location_lat (decimal)
-        - location_lng (decimal)
-        - overall_rating (decimal, default 0)
-        - reliability_score (decimal, default 100)
-        - total_games_played (integer, default 0)
-        - created_at (timestamptz, default now())
-        - updated_at (timestamptz)
-        - is_venue_owner (boolean, default false)
-        - stripe_customer_id (text)
-        - notification_preferences (jsonb)
+        - id (text, primary key, UUID)
+        - name (text, not null)
+        - avatar_url (text, nullable)
+        - bio (text, nullable, max 300 chars)
+        - skill_level (integer, 1-5, not null)
+        - positions (text, JSON array) -- ["goalkeeper", "defender"]
+        - play_styles (text, JSON array) -- ["casual", "social"]
+        - games_played (integer, default 0)
+        - reliability_score (integer, default 100) -- percentage
+        - is_demo (integer, boolean, default 0)
+        - created_at (text, ISO timestamp)
+        - updated_at (text, ISO timestamp)
       </players>
 
-      <sports>
-        - id (uuid, primary key)
-        - name (text, unique, not null) -- basketball, soccer, tennis
-        - display_name (text, not null)
-        - icon (text) -- icon identifier
-        - default_team_size (integer)
-        - description (text)
-        - is_active (boolean, default true)
-      </sports>
-
-      <player_sports>
-        - id (uuid, primary key)
-        - player_id (uuid, references players, not null)
-        - sport_id (uuid, references sports, not null)
-        - skill_level (integer, 1-5, not null)
-        - years_experience (integer, default 0)
-        - is_primary (boolean, default false)
-        - created_at (timestamptz, default now())
-        - unique constraint (player_id, sport_id)
-      </player_sports>
-
-      <player_availability>
-        - id (uuid, primary key)
-        - player_id (uuid, references players, not null)
-        - day_of_week (integer, 0-6, not null) -- 0=Sunday
-        - start_time (time, not null)
-        - end_time (time, not null)
-        - is_active (boolean, default true)
-        - created_at (timestamptz, default now())
-      </player_availability>
-
       <venues>
-        - id (uuid, primary key)
-        - owner_id (uuid, references players)
+        - id (text, primary key, UUID)
         - name (text, not null)
         - description (text)
         - address (text, not null)
-        - city (text, not null)
-        - state (text)
-        - postal_code (text)
-        - country (text, default 'US')
-        - location_lat (decimal, not null)
-        - location_lng (decimal, not null)
-        - phone (text)
-        - email (text)
-        - website (text)
-        - amenities (jsonb) -- {parking: true, showers: true, ...}
-        - images (jsonb) -- array of image URLs
-        - operating_hours (jsonb) -- {monday: {open: "06:00", close: "22:00"}, ...}
-        - overall_rating (decimal, default 0)
-        - total_ratings (integer, default 0)
-        - is_verified (boolean, default false)
-        - is_active (boolean, default true)
-        - created_at (timestamptz, default now())
-        - updated_at (timestamptz)
-        - stripe_account_id (text)
+        - latitude (real, not null)
+        - longitude (real, not null)
+        - images (text, JSON array of URLs)
+        - amenities (text, JSON object) -- {parking: true, showers: true}
+        - pitch_type (text) -- "grass", "astro", "indoor"
+        - pitch_size (text) -- "5-a-side", "7-a-side", "11-a-side"
+        - max_capacity (integer, not null)
+        - min_players (integer, not null) -- threshold for game
+        - operating_hours (text, JSON) -- {monday: {open: "09:00", close: "21:00"}}
+        - is_active (integer, boolean, default 1)
+        - created_at (text, ISO timestamp)
+        - updated_at (text, ISO timestamp)
       </venues>
 
-      <venue_sports>
-        - id (uuid, primary key)
-        - venue_id (uuid, references venues, not null)
-        - sport_id (uuid, references sports, not null)
-        - hourly_rate (decimal, not null)
-        - capacity (integer, not null) -- max players
-        - court_count (integer, default 1)
-        - equipment_available (boolean, default false)
-        - is_available (boolean, default true)
-        - created_at (timestamptz, default now())
-        - unique constraint (venue_id, sport_id)
-      </venue_sports>
+      <venue_availability>
+        - id (text, primary key, UUID)
+        - venue_id (text, foreign key → venues)
+        - day_of_week (integer, 0-6) -- 0 = Sunday
+        - start_time (text, HH:MM format)
+        - end_time (text, HH:MM format)
+        - is_available (integer, boolean, default 1)
+        - created_at (text, ISO timestamp)
+      </venue_availability>
+
+      <favourite_venues>
+        - id (text, primary key, UUID)
+        - player_id (text, foreign key → players)
+        - venue_id (text, foreign key → venues)
+        - notify_on_games (integer, boolean, default 1)
+        - created_at (text, ISO timestamp)
+        - UNIQUE(player_id, venue_id)
+      </favourite_venues>
+
+      <interests>
+        - id (text, primary key, UUID)
+        - player_id (text, foreign key → players)
+        - venue_id (text, foreign key → venues)
+        - day_of_week (integer, 0-6, nullable) -- for recurring
+        - specific_date (text, YYYY-MM-DD, nullable) -- for one-time
+        - time_slot (text) -- "morning", "afternoon", "evening"
+        - start_time (text, HH:MM, nullable) -- specific time
+        - end_time (text, HH:MM, nullable)
+        - duration_minutes (integer, default 90)
+        - skill_level (integer, 1-5) -- player's level for this interest
+        - game_type_preference (text) -- "casual", "competitive", "any"
+        - is_recurring (integer, boolean, default 0)
+        - is_active (integer, boolean, default 1)
+        - converted_to_game_id (text, nullable) -- if interest became a game
+        - created_at (text, ISO timestamp)
+        - updated_at (text, ISO timestamp)
+      </interests>
 
       <games>
-        - id (uuid, primary key)
-        - host_id (uuid, references players, not null)
-        - sport_id (uuid, references sports, not null)
-        - venue_id (uuid, references venues) -- nullable for TBD
-        - title (text) -- auto-generated if not provided
-        - description (text, max 1000 chars)
-        - game_date (date, not null)
-        - start_time (time, not null)
-        - end_time (time, not null)
-        - skill_level_min (integer, 1-5, not null)
-        - skill_level_max (integer, 1-5, not null)
-        - max_players (integer, not null)
-        - current_player_count (integer, default 1) -- includes host
-        - cost_per_player (decimal, default 0)
-        - venue_cost (decimal) -- total venue booking cost
-        - status (text, not null) -- draft, open, full, in_progress, completed, cancelled
-        - cancellation_reason (text)
-        - notes (text)
-        - created_at (timestamptz, default now())
-        - updated_at (timestamptz)
-        - completed_at (timestamptz)
+        - id (text, primary key, UUID)
+        - venue_id (text, foreign key → venues)
+        - host_id (text, foreign key → players, nullable) -- null for auto-created
+        - title (text)
+        - description (text)
+        - game_date (text, YYYY-MM-DD)
+        - start_time (text, HH:MM)
+        - end_time (text, HH:MM)
+        - game_type (text) -- "open", "private"
+        - skill_level_min (integer, 1-5)
+        - skill_level_max (integer, 1-5)
+        - min_players (integer)
+        - max_players (integer)
+        - current_players (integer, default 0)
+        - status (text) -- "forming", "confirmed", "full", "in_progress", "completed", "cancelled"
+        - is_auto_created (integer, boolean, default 0)
+        - visibility (text) -- "public", "unlisted" (for private games with link)
+        - requirements (text, JSON, nullable) -- {positions_needed: ["goalkeeper"]}
+        - created_at (text, ISO timestamp)
+        - updated_at (text, ISO timestamp)
       </games>
 
       <game_participants>
-        - id (uuid, primary key)
-        - game_id (uuid, references games, not null)
-        - player_id (uuid, references players, not null)
-        - status (text, not null) -- pending, confirmed, cancelled, no_show, completed
-        - payment_status (text) -- pending, paid, refunded, forfeited
-        - payment_amount (decimal)
-        - payment_intent_id (text) -- Stripe payment intent
-        - joined_at (timestamptz, default now())
-        - approved_at (timestamptz)
-        - cancelled_at (timestamptz)
-        - cancellation_reason (text)
-        - has_rated (boolean, default false)
-        - unique constraint (game_id, player_id)
+        - id (text, primary key, UUID)
+        - game_id (text, foreign key → games)
+        - player_id (text, foreign key → players)
+        - status (text) -- "confirmed", "pending", "rejected", "left"
+        - role (text) -- "host", "player"
+        - joined_at (text, ISO timestamp)
+        - approved_at (text, ISO timestamp, nullable)
+        - UNIQUE(game_id, player_id)
       </game_participants>
 
-      <player_ratings>
-        - id (uuid, primary key)
-        - game_id (uuid, references games, not null)
-        - rater_id (uuid, references players, not null)
-        - rated_player_id (uuid, references players, not null)
-        - skill_rating (integer, 1-5, not null)
-        - reliability_rating (integer, 1-5, not null)
-        - sportsmanship_rating (integer, 1-5, not null)
-        - comment (text, max 500 chars)
-        - created_at (timestamptz, default now())
-        - unique constraint (game_id, rater_id, rated_player_id)
-      </player_ratings>
-
-      <venue_ratings>
-        - id (uuid, primary key)
-        - venue_id (uuid, references venues, not null)
-        - player_id (uuid, references players, not null)
-        - game_id (uuid, references games)
-        - rating (integer, 1-5, not null)
-        - cleanliness (integer, 1-5)
-        - facilities (integer, 1-5)
-        - staff (integer, 1-5)
-        - comment (text, max 500 chars)
-        - images (jsonb) -- array of image URLs
-        - created_at (timestamptz, default now())
-        - unique constraint (venue_id, player_id, game_id)
-      </venue_ratings>
+      <game_messages>
+        - id (text, primary key, UUID)
+        - game_id (text, foreign key → games)
+        - player_id (text, foreign key → players)
+        - message (text, max 500 chars)
+        - created_at (text, ISO timestamp)
+      </game_messages>
 
       <notifications>
-        - id (uuid, primary key)
-        - player_id (uuid, references players, not null)
-        - type (text, not null) -- join_request, approved, game_reminder, etc.
-        - title (text, not null)
-        - message (text, not null)
-        - data (jsonb) -- additional context (game_id, etc.)
-        - is_read (boolean, default false)
-        - created_at (timestamptz, default now())
+        - id (text, primary key, UUID)
+        - player_id (text, foreign key → players)
+        - type (text) -- notification type code
+        - title (text)
+        - message (text)
+        - data (text, JSON) -- {game_id: "...", venue_id: "..."}
+        - is_read (integer, boolean, default 0)
+        - created_at (text, ISO timestamp)
       </notifications>
-
-      <payments>
-        - id (uuid, primary key)
-        - player_id (uuid, references players, not null)
-        - game_id (uuid, references games, not null)
-        - participant_id (uuid, references game_participants, not null)
-        - amount (decimal, not null)
-        - platform_fee (decimal, not null)
-        - net_amount (decimal, not null) -- amount minus fee
-        - currency (text, default 'usd')
-        - status (text, not null) -- pending, succeeded, failed, refunded
-        - stripe_payment_intent_id (text)
-        - stripe_charge_id (text)
-        - refund_amount (decimal)
-        - refund_reason (text)
-        - created_at (timestamptz, default now())
-        - updated_at (timestamptz)
-      </payments>
     </tables>
 
     <indexes>
-      - games: sport_id, venue_id, host_id, game_date, status
-      - game_participants: game_id, player_id, status
-      - player_sports: player_id, sport_id
-      - player_availability: player_id, day_of_week
-      - player_ratings: rated_player_id, game_id
-      - venue_ratings: venue_id
-      - notifications: player_id, is_read, created_at
-      - payments: player_id, game_id, status
-      - Spatial index on venues (location_lat, location_lng)
-      - Spatial index on games via venue location
+      - interests: (venue_id, day_of_week, is_active)
+      - interests: (player_id, is_active)
+      - games: (venue_id, game_date, status)
+      - games: (status, game_date)
+      - game_participants: (game_id, status)
+      - game_participants: (player_id, status)
+      - notifications: (player_id, is_read, created_at)
+      - favourite_venues: (player_id)
     </indexes>
-
-    <row_level_security>
-      - Players can read all players (public profiles)
-      - Players can update only their own profile
-      - Players can read all games
-      - Only hosts can update/delete their own games
-      - Players can see their own participation records
-      - Hosts can see all participants for their games
-      - Ratings are readable by the rated player only
-      - Payment records visible only to the payer
-      - Notifications visible only to recipient
-    </row_level_security>
   </database_schema>
 
-  <api_endpoints_summary>
-    <authentication>
-      - POST /api/auth/register - Create new player account
-      - POST /api/auth/login - Sign in with email/password
-      - POST /api/auth/logout - Sign out current session
-      - POST /api/auth/forgot-password - Request password reset
-      - POST /api/auth/reset-password - Reset password with token
-      - GET /api/auth/me - Get current user profile
-    </authentication>
+  <api_endpoints>
+    <demo_endpoints>
+      GET    /api/demo/current-user           - Get active demo user
+      GET    /api/demo/users                  - List all demo users
+      POST   /api/demo/switch-user/:id        - Switch to different demo user
+      POST   /api/demo/reset                  - Reset database to seed state
+      POST   /api/demo/simulate-interests     - Add random interests
+      POST   /api/demo/trigger-matching       - Force game creation check
+    </demo_endpoints>
 
-    <players>
-      - GET /api/players - List players (with filters)
-      - GET /api/players/:id - Get player profile
-      - PUT /api/players/:id - Update player profile
-      - GET /api/players/:id/stats - Get player statistics
-      - GET /api/players/:id/games - Get player's games
-      - GET /api/players/:id/ratings - Get player's received ratings
-      - POST /api/players/:id/avatar - Upload profile photo
-      - DELETE /api/players/:id - Delete account (soft delete)
-    </players>
+    <player_endpoints>
+      GET    /api/players                     - List players (with filters)
+      GET    /api/players/:id                 - Get player by ID
+      PUT    /api/players/:id                 - Update player profile
+      GET    /api/players/:id/games           - Get player's games
+      GET    /api/players/:id/interests       - Get player's interests
+      GET    /api/players/:id/favourites      - Get player's favourite venues
+      POST   /api/players/:id/avatar          - Upload avatar image
+    </player_endpoints>
 
-    <player_sports>
-      - GET /api/players/:id/sports - Get player's sports
-      - POST /api/players/:id/sports - Add sport to player
-      - PUT /api/players/:id/sports/:sportId - Update skill level
-      - DELETE /api/players/:id/sports/:sportId - Remove sport
-    </player_sports>
+    <venue_endpoints>
+      GET    /api/venues                      - List venues (with filters)
+      POST   /api/venues                      - Create venue
+      GET    /api/venues/:id                  - Get venue details
+      PUT    /api/venues/:id                  - Update venue
+      GET    /api/venues/:id/availability     - Get venue time slots
+      PUT    /api/venues/:id/availability     - Update availability
+      GET    /api/venues/:id/interest-summary - Aggregated interest data
+      GET    /api/venues/:id/games            - Games at this venue
+      POST   /api/venues/:id/images           - Upload venue images
+    </venue_endpoints>
 
-    <player_availability>
-      - GET /api/players/:id/availability - Get availability slots
-      - POST /api/players/:id/availability - Add availability slot
-      - PUT /api/players/:id/availability/:slotId - Update slot
-      - DELETE /api/players/:id/availability/:slotId - Remove slot
-      - PUT /api/players/:id/availability/bulk - Bulk update availability
-    </player_availability>
+    <favourite_endpoints>
+      GET    /api/favourites                  - Get current user's favourites
+      POST   /api/favourites                  - Add favourite venue
+      DELETE /api/favourites/:venueId         - Remove favourite
+      PUT    /api/favourites/:venueId         - Update notification prefs
+    </favourite_endpoints>
 
-    <venues>
-      - GET /api/venues - List venues (with location filter)
-      - GET /api/venues/:id - Get venue details
-      - POST /api/venues - Create new venue
-      - PUT /api/venues/:id - Update venue
-      - DELETE /api/venues/:id - Delete venue
-      - GET /api/venues/:id/sports - Get venue's sports
-      - POST /api/venues/:id/sports - Add sport to venue
-      - GET /api/venues/:id/games - Get games at venue
-      - GET /api/venues/:id/ratings - Get venue ratings
-      - POST /api/venues/:id/images - Upload venue images
-    </venues>
+    <interest_endpoints>
+      GET    /api/interests                   - Get current user's interests
+      POST   /api/interests                   - Register new interest
+      PUT    /api/interests/:id               - Update interest
+      DELETE /api/interests/:id               - Remove interest
+      GET    /api/interests/hot-spots         - Venues with high interest
+    </interest_endpoints>
 
-    <games>
-      - GET /api/games - List games (with filters)
-      - GET /api/games/:id - Get game details
-      - POST /api/games - Create new game
-      - PUT /api/games/:id - Update game
-      - DELETE /api/games/:id - Cancel/delete game
-      - POST /api/games/:id/join - Request to join game
-      - POST /api/games/:id/approve/:playerId - Approve join request
-      - POST /api/games/:id/reject/:playerId - Reject join request
-      - POST /api/games/:id/leave - Leave game
-      - POST /api/games/:id/complete - Mark game as completed
-      - GET /api/games/:id/participants - Get participants list
-      - GET /api/games/recommended - Get recommended games
-      - GET /api/games/nearby - Get games near location
-    </games>
+    <game_endpoints>
+      GET    /api/games                       - List games (with filters)
+      POST   /api/games                       - Create game (private)
+      GET    /api/games/:id                   - Get game details
+      PUT    /api/games/:id                   - Update game (host only)
+      DELETE /api/games/:id                   - Cancel game (host only)
+      POST   /api/games/:id/join              - Join game or apply
+      POST   /api/games/:id/leave             - Leave game
+      GET    /api/games/:id/participants      - Get participant list
+      POST   /api/games/:id/approve/:playerId - Approve application
+      POST   /api/games/:id/reject/:playerId  - Reject application
+      GET    /api/games/:id/messages          - Get lobby messages
+      POST   /api/games/:id/messages          - Post lobby message
+      GET    /api/games/recommended           - Games recommended for user
+    </game_endpoints>
 
-    <ratings>
-      - GET /api/games/:id/ratings - Get ratings for a game
-      - POST /api/games/:id/ratings - Submit player ratings
-      - GET /api/ratings/pending - Get games pending my ratings
-      - POST /api/venues/:id/ratings - Submit venue rating
-    </ratings>
+    <notification_endpoints>
+      GET    /api/notifications               - Get user's notifications
+      PUT    /api/notifications/:id/read      - Mark as read
+      PUT    /api/notifications/read-all      - Mark all as read
+      DELETE /api/notifications/:id           - Delete notification
+      GET    /api/notifications/stream        - SSE endpoint for real-time
+    </notification_endpoints>
 
-    <payments>
-      - POST /api/payments/create-intent - Create Stripe payment intent
-      - POST /api/payments/confirm - Confirm payment
-      - POST /api/payments/refund/:id - Request refund
-      - GET /api/payments/history - Get payment history
-      - POST /api/webhooks/stripe - Stripe webhook handler
-    </payments>
+    <search_endpoints>
+      GET    /api/search?q=query              - Global search
+    </search_endpoints>
+  </api_endpoints>
 
-    <notifications>
-      - GET /api/notifications - Get user notifications
-      - PUT /api/notifications/:id/read - Mark as read
-      - PUT /api/notifications/read-all - Mark all as read
-      - DELETE /api/notifications/:id - Delete notification
-      - GET /api/notifications/unread-count - Get unread count
-    </notifications>
+  <ui_components>
+    <base_components>
+      - Button (primary, secondary, ghost, danger variants)
+      - Input (text, number, with icons)
+      - Select (dropdown with search)
+      - Checkbox, Radio, Switch
+      - Card (container with header, body, footer)
+      - Modal (center, bottom sheet on mobile)
+      - Toast (success, error, info notifications)
+      - Avatar (with fallback initials)
+      - Badge (status indicators)
+      - Tabs (horizontal, scrollable on mobile)
+      - Skeleton (loading placeholders)
+      - Empty State (illustration + message + action)
+      - Progress Bar (for interest thresholds)
+    </base_components>
 
-    <search>
-      - GET /api/search?q=query&type=all|games|players|venues
-      - GET /api/search/games - Search games with filters
-      - GET /api/search/players - Search players
-      - GET /api/search/venues - Search venues
-    </search>
+    <interest_components>
+      - InterestCard: Shows single interest with edit/delete
+      - InterestForm: Multi-step form to register interest
+      - InterestHeatmap: Visual grid of interest by time
+      - InterestBar: Progress bar showing current vs threshold
+      - InterestQuickAdd: One-tap add interest button
+      - TimeSlotPicker: Select morning/afternoon/evening
+    </interest_components>
 
-    <sports>
-      - GET /api/sports - List all available sports
-      - GET /api/sports/:id - Get sport details
-    </sports>
-  </api_endpoints_summary>
+    <venue_components>
+      - VenueCard: Card for venue list (image, name, interest count)
+      - VenueDetail: Full venue page layout
+      - VenueMap: Leaflet map with venue markers
+      - VenueInterestGrid: Time slots with interest levels
+      - FavouriteButton: Heart toggle button
+      - AmenitiesList: Icons for venue features
+      - VenueImageGallery: Carousel of venue photos
+    </venue_components>
 
-  <ui_layout>
-    <main_structure>
-      - Two-column layout on desktop: sidebar (navigation/filters), main content
-      - Single column on mobile with bottom navigation
-      - Persistent header with logo, search, notifications, profile
-      - Responsive breakpoints: mobile (<768px), tablet (768-1024px), desktop (>1024px)
-    </main_structure>
+    <game_components>
+      - GameCard: Card for game list
+      - GameLobby: Full lobby interface
+      - PlayerList: List of participants with status
+      - JoinButton: Context-aware (join/apply/full/leave)
+      - GameStatusBadge: Forming/Confirmed/Full badges
+      - CountdownTimer: Time until game starts
+      - LobbyChat: Simple message list + input
+      - PositionGrid: Visual of filled/needed positions
+    </game_components>
 
-    <sidebar_navigation>
-      - Logo and app name
-      - Navigation links:
-        - Dashboard (home icon)
-        - Browse Games (search icon)
-        - Create Game (plus icon)
-        - My Games (calendar icon)
-        - Venues (location icon)
-        - Profile (user icon)
-      - Collapsible on tablet
-      - Hidden on mobile (use bottom nav)
-    </sidebar_navigation>
+    <player_components>
+      - PlayerCard: Compact player display
+      - PlayerProfile: Full profile page
+      - SkillBadge: Level 1-5 with color
+      - PositionBadge: GK, DEF, MID, FWD icons
+      - ReliabilityIndicator: Percentage display
+      - DemoUserSelector: Dropdown to switch demo users
+    </player_components>
 
-    <mobile_bottom_nav>
-      - Home/Dashboard
-      - Browse Games
-      - Create Game (prominent center button)
-      - My Games
-      - Profile
-    </mobile_bottom_nav>
-
-    <header>
-      - Logo (links to dashboard)
-      - Global search bar (games, players, venues)
-      - Notification bell with unread count
-      - User avatar with dropdown menu
-      - Mobile: hamburger menu for sidebar
-    </header>
-
-    <page_layouts>
-      <browse_games_page>
-        - Filter bar: sport, date range, skill level, distance
-        - Toggle: list view / map view
-        - Game cards grid (responsive columns)
-        - Pagination or infinite scroll
-        - Empty state with CTA to create game
-      </browse_games_page>
-
-      <game_detail_page>
-        - Hero section: sport icon, title, date/time
-        - Key info: venue, skill range, spots remaining
-        - Host profile card
-        - Participants list with avatars
-        - Join button (sticky on mobile)
-        - Game description/notes
-        - Venue info (if selected)
-        - Map showing location
-      </game_detail_page>
-
-      <create_game_page>
-        - Multi-step form wizard
-        - Step indicators
-        - Form sections: sport, timing, location, details, pricing
-        - Preview before publish
-        - Mobile-optimized inputs
-      </create_game_page>
-
-      <dashboard_page>
-        - Welcome message with player name
-        - Quick stats cards (games played, rating, reliability)
-        - Upcoming games section (horizontal scroll)
-        - Games I'm hosting section
-        - Pending actions (approvals, ratings)
-        - Recommended games
-      </dashboard_page>
-
-      <profile_page>
-        - Avatar with edit overlay
-        - Name, location, bio
-        - Sports with skill badges
-        - Stats overview
-        - Recent games list
-        - Rating display
-        - Edit profile button
-      </profile_page>
-
-      <venue_detail_page>
-        - Photo gallery with lightbox
-        - Venue name and rating
-        - Address with map
-        - Contact information
-        - Available sports and pricing
-        - Amenities list
-        - Recent reviews
-        - Upcoming games at venue
-      </venue_detail_page>
-    </page_layouts>
-
-    <modals_and_overlays>
-      - Join game confirmation modal
-      - Cancel game confirmation
-      - Rate players post-game modal
-      - Rate venue modal
-      - Payment modal (Stripe Elements)
-      - Filter modal (mobile)
-      - Player quick view modal
-      - Settings modal
-    </modals_and_overlays>
-  </ui_layout>
+    <layout_components>
+      - AppShell: Main layout wrapper
+      - BottomNav: Mobile navigation bar
+      - Sidebar: Desktop/tablet navigation
+      - Header: Top bar with notifications, user
+      - PageContainer: Consistent page wrapper
+      - PullToRefresh: Pull down refresh wrapper
+    </layout_components>
+  </ui_components>
 
   <design_system>
-    <color_palette>
-      <!-- Primary: Energetic, sporty feel -->
-      <primary>hsl(217, 91%, 60%)</primary> <!-- Blue - trust, reliability -->
-      <secondary>hsl(142, 76%, 36%)</secondary> <!-- Green - success, go -->
-      <accent>hsl(38, 92%, 50%)</accent> <!-- Orange - energy, CTA -->
-      <destructive>hsl(0, 84%, 60%)</destructive> <!-- Red - errors, cancel -->
+    <colors>
+      <!-- Primary: Football/sport green theme -->
+      <primary>
+        50: #f0fdf4
+        100: #dcfce7
+        200: #bbf7d0
+        300: #86efac
+        400: #4ade80
+        500: #22c55e (main)
+        600: #16a34a
+        700: #15803d
+        800: #166534
+        900: #14532d
+      </primary>
       
-      <!-- Sport-specific accents -->
-      <basketball>hsl(24, 100%, 50%)</basketball> <!-- Orange -->
-      <soccer>hsl(142, 76%, 36%)</soccer> <!-- Green -->
-      <tennis>hsl(49, 100%, 50%)</tennis> <!-- Yellow -->
+      <!-- Accent: Energetic orange for CTAs -->
+      <accent>
+        400: #fb923c
+        500: #f97316 (main)
+        600: #ea580c
+      </accent>
       
-      <!-- Neutrals -->
-      <background>hsl(0, 0%, 100%)</background>
-      <foreground>hsl(222, 47%, 11%)</foreground>
-      <muted>hsl(210, 40%, 96%)</muted>
-      <border>hsl(214, 32%, 91%)</border>
+      <!-- Neutral grays -->
+      <gray>
+        50: #f9fafb
+        100: #f3f4f6
+        200: #e5e7eb
+        300: #d1d5db
+        400: #9ca3af
+        500: #6b7280
+        600: #4b5563
+        700: #374151
+        800: #1f2937
+        900: #111827
+      </gray>
       
-      <!-- Dark mode variants -->
-      <dark_background>hsl(222, 47%, 11%)</dark_background>
-      <dark_foreground>hsl(210, 40%, 98%)</dark_foreground>
-      <dark_muted>hsl(217, 33%, 17%)</dark_muted>
-    </color_palette>
+      <!-- Semantic colors -->
+      <success>#22c55e</success>
+      <warning>#eab308</warning>
+      <error>#ef4444</error>
+      <info>#3b82f6</info>
+    </colors>
 
     <typography>
-      - Font family: Inter, system-ui, sans-serif
-      - Headings: font-bold, tracking-tight
-      - Body: font-normal, leading-relaxed
-      - Small: font-medium, text-sm
-      - Display sizes: text-4xl (h1), text-2xl (h2), text-xl (h3), text-lg (h4)
-      - Body size: text-base (16px)
+      Font: Inter (or system-ui fallback)
+      
+      Sizes:
+      - xs: 12px / 0.75rem
+      - sm: 14px / 0.875rem
+      - base: 16px / 1rem
+      - lg: 18px / 1.125rem
+      - xl: 20px / 1.25rem
+      - 2xl: 24px / 1.5rem
+      - 3xl: 30px / 1.875rem
+      - 4xl: 36px / 2.25rem
+      
+      Weights:
+      - normal: 400
+      - medium: 500
+      - semibold: 600
+      - bold: 700
     </typography>
 
     <spacing>
-      - Container max-width: 1280px
-      - Page padding: p-4 (mobile), p-6 (tablet), p-8 (desktop)
-      - Card padding: p-4 to p-6
-      - Section spacing: space-y-6 to space-y-8
-      - Component gap: gap-2 to gap-4
+      Base unit: 4px
+      Scale: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64
+      (multiplied by 4px)
     </spacing>
 
-    <components>
-      <game_card>
-        - White background with subtle shadow
-        - Sport icon badge (top left)
-        - Date/time prominent display
-        - Skill level indicator (colored bar)
-        - Player count (e.g., "6/10 players")
-        - Host avatar (small)
-        - Cost badge (if applicable)
-        - Hover: lift shadow, highlight
-        - Click: navigate to game detail
-      </game_card>
+    <borders>
+      Radius:
+      - none: 0
+      - sm: 4px
+      - md: 8px (default)
+      - lg: 12px
+      - xl: 16px
+      - full: 9999px (pills/circles)
+    </borders>
 
-      <player_card>
-        - Avatar (circular, 48px)
-        - Name and location
-        - Primary sport badge
-        - Rating stars display
-        - Skill level for sport context
-        - Quick action buttons
-      </player_card>
+    <shadows>
+      - sm: 0 1px 2px rgba(0,0,0,0.05)
+      - md: 0 4px 6px rgba(0,0,0,0.1)
+      - lg: 0 10px 15px rgba(0,0,0,0.1)
+      - xl: 0 20px 25px rgba(0,0,0,0.1)
+    </shadows>
 
-      <skill_badge>
-        - Rounded pill shape
-        - Color coded by level:
-          - 1 (Beginner): gray
-          - 2 (Novice): blue
-          - 3 (Intermediate): green
-          - 4 (Advanced): orange
-          - 5 (Expert): red/gold
-        - Icon + text label
-      </skill_badge>
-
-      <rating_display>
-        - 5-star visual (filled/empty)
-        - Numeric rating beside stars
-        - Review count in muted text
-        - Compact variant for cards
-      </rating_display>
-
-      <venue_card>
-        - Hero image (16:9 aspect)
-        - Venue name bold
-        - Sports available (icon badges)
-        - Distance from user
-        - Rating display
-        - Price range indicator
-      </venue_card>
-
-      <buttons>
-        - Primary: Blue background, white text
-        - Secondary: Border, transparent bg
-        - Accent: Orange background (CTAs)
-        - Ghost: No border, hover bg
-        - Sizes: sm, default, lg
-        - Disabled: 50% opacity
-        - Loading: spinner + "Loading..."
-      </buttons>
-
-      <inputs>
-        - Rounded borders (radius-md)
-        - Focus ring (blue)
-        - Error state (red border)
-        - Helper text below
-        - Label above or floating
-      </inputs>
-
-      <sport_selector>
-        - Toggle buttons for each sport
-        - Icon + name
-        - Selected state highlighted
-        - Multi-select for profile
-        - Single-select for game filters
-      </sport_selector>
-
-      <availability_calendar>
-        - Week view with time slots
-        - Drag to select time ranges
-        - Color for selected slots
-        - Clear button per slot
-        - Mobile: time picker per day
-      </availability_calendar>
-
-      <map_component>
-        - Google Maps / Mapbox integration
-        - Custom markers for games/venues
-        - Cluster markers at zoom out
-        - Info window on marker click
-        - "Games near me" radius circle
-      </map_component>
-    </components>
-
-    <animations>
-      - Page transitions: fade (150ms)
-      - Card hover: transform scale (100ms)
-      - Modal: slide up + fade (200ms)
-      - Skeleton loading: pulse animation
-      - Success: checkmark animation
-      - Error: shake animation
-      - Notifications: slide in from right
-    </animations>
+    <motion>
+      - Duration: 150ms (micro), 200ms (normal), 300ms (page)
+      - Easing: ease-out for entrances, ease-in for exits
+      - Spring: stiffness 300, damping 20 (for Framer Motion)
+    </motion>
   </design_system>
 
-  <key_interactions>
-    <registration_flow>
-      1. Land on homepage with value proposition
-      2. Click "Sign Up" button
-      3. Enter email and password
-      4. Verify email (click link)
-      5. Complete profile: name, location, photo
-      6. Select sports and skill levels
-      7. Set weekly availability (optional, can skip)
-      8. Arrive at dashboard with onboarding tips
-    </registration_flow>
+  <key_user_flows>
+    <flow_1_new_player_registers_interest>
+      1. Open app → See list of popular venues with interest levels
+      2. Browse venues → Select "Central Park Football"
+      3. View venue detail → See interest heatmap by day/time
+      4. Notice Saturday afternoon has 8/10 players
+      5. Tap "I'm interested" on Saturday 2-5pm slot
+      6. Confirm skill level (3 - Intermediate)
+      7. Choose: recurring weekly or one-time
+      8. Interest registered → See confirmation toast
+      9. Check "My Interests" → See all active interests
+      10. Later: Receive notification when threshold reached
+    </flow_1_new_player_registers_interest>
 
-    <create_game_flow>
-      1. Click "Create Game" from nav/dashboard
-      2. Select sport from available options
-      3. Choose date and time with picker
-      4. Set duration
-      5. Define skill level range (slider)
-      6. Select venue or mark "TBD"
-      7. Set max players
-      8. Set cost per player (optional)
-      9. Add notes/description
-      10. Preview game details
-      11. Publish game
-      12. Arrive at game detail page as host
-    </create_game_flow>
+    <flow_2_interest_becomes_game>
+      1. 10th player registers interest for Saturday at Central Park
+      2. System detects threshold met
+      3. Auto-creates "Open Game" for Saturday 2-5pm
+      4. All 10 interested players receive notification
+      5. Player opens notification → Goes to game lobby
+      6. Sees other players who have joined
+      7. Taps "Join Game" → Confirmed in lobby
+      8. Game status shows "Forming: 6/10 confirmed"
+      9. More players confirm → Status becomes "Confirmed"
+      10. Game day: Plays football! ⚽
+    </flow_2_interest_becomes_game>
 
-    <join_game_flow>
-      1. Browse games or search
-      2. Click game card to view details
-      3. Review game info, host, participants
-      4. Click "Request to Join"
-      5. Confirm skill level is accurate
-      6. Wait for host approval
-      7. Receive approval notification
-      8. Complete payment (if game has cost)
-      9. Receive confirmation email
-      10. Game appears in "My Games"
-    </join_game_flow>
+    <flow_3_host_creates_private_game>
+      1. Experienced player wants specific skill level game
+      2. Navigate to "Create Game"
+      3. Select venue, date, time
+      4. Set as "Private" with requirements:
+         - Skill level: 4-5 only
+         - Need at least 1 goalkeeper
+      5. Set visibility: "Listed" (searchable) or "Unlisted"
+      6. Create game → Lands in lobby as host
+      7. Share link with friends
+      8. Receives applications from other players
+      9. Reviews player profiles → Approves/Rejects
+      10. Manages lobby until game time
+    </flow_3_host_creates_private_game>
 
-    <host_approval_flow>
-      1. Receive notification of join request
-      2. Navigate to game or click notification
-      3. View requesting player's profile
-      4. Check skill level, rating, reliability
-      5. Approve or reject with optional message
-      6. On approval, player is prompted to pay
-      7. Player appears in participants list
-    </host_approval_flow>
+    <flow_4_player_applies_to_private_game>
+      1. Browse games → See "Advanced Players Only" game
+      2. View game details → Requirements shown
+      3. Tap "Apply to Join"
+      4. See own profile vs requirements
+      5. Submit application
+      6. Status: "Pending approval"
+      7. Receive notification: "Approved!"
+      8. Now in game lobby
+      9. Can chat with other players
+      10. Receive game reminders
+    </flow_4_player_applies_to_private_game>
+  </key_user_flows>
 
-    <post_game_rating_flow>
-      1. Game marked as completed (auto or manual)
-      2. Receive notification to rate players
-      3. Open rating modal/page
-      4. Rate each participant on 3 dimensions
-      5. Add optional text feedback
-      6. Submit ratings
-      7. Ratings reflected in player profiles
-      8. Optional: rate venue
-    </post_game_rating_flow>
-
-    <cancellation_flow>
-      1. Navigate to game in "My Games"
-      2. Click "Cancel" or "Leave Game"
-      3. Confirm cancellation
-      4. If <24hrs, see refund policy warning
-      5. Confirm understanding
-      6. Refund processed (if applicable)
-      7. Other participants notified
-      8. Game status updated or removed
-    </cancellation_flow>
-  </key_interactions>
-
-  <implementation_steps>
-    <week_1>
-      <title>Project Setup and Authentication</title>
+  <implementation_phases>
+    <phase_1_foundation>
+      <title>Week 1: Project Setup + Core Structure</title>
       <tasks>
-        - Initialize Next.js 14 project with TypeScript
-        - Configure Tailwind CSS and shadcn/ui
-        - Set up Supabase project and connection
-        - Create database schema migration
-        - Enable Row Level Security policies
-        - Implement authentication (register, login, logout)
-        - Build auth context and protected route wrapper
-        - Create basic layout components (header, nav, footer)
-        - Deploy initial version to Vercel
+        - Initialize monorepo with Turborepo + pnpm
+        - Set up React + Vite frontend with Tailwind
+        - Set up Fastify backend with TypeScript
+        - Configure SQLite + Drizzle ORM
+        - Create database schema and migrations
+        - Build seed script with demo users + venues
+        - Implement demo user switching system
+        - Create basic layout components (shell, nav)
+        - Set up basic API client in frontend
+        - Verify Puppeteer can run tests
       </tasks>
-    </week_1>
+      <deliverable>
+        Working app shell with navigation, demo user dropdown,
+        and seeded database viewable in DB Browser.
+      </deliverable>
+    </phase_1_foundation>
 
-    <week_2>
-      <title>Player Profiles and Sports Setup</title>
+    <phase_2_player_profiles>
+      <title>Week 2: Player Profiles + Venues</title>
       <tasks>
-        - Build player profile page (view and edit)
-        - Implement profile photo upload
-        - Create sport selection component
-        - Build skill level selector with descriptions
-        - Implement player sports CRUD
-        - Create weekly availability calendar component
-        - Build player availability management
-        - Add location search/autocomplete
-        - Create player card component
-      </tasks>
-    </week_2>
-
-    <week_3>
-      <title>Game Lobby - Browse and Create</title>
-      <tasks>
-        - Build game listing page with cards
-        - Implement filters (sport, date, skill, location)
-        - Create game detail page
-        - Build create game form wizard
-        - Implement game CRUD endpoints
-        - Add date/time picker components
-        - Create skill range selector
-        - Build venue selector (dropdown)
-        - Implement game status management
-      </tasks>
-    </week_3>
-
-    <week_4>
-      <title>Game Participation Flow</title>
-      <tasks>
-        - Implement join game request flow
-        - Build host approval/rejection system
-        - Create participant management UI
-        - Add leave game functionality
-        - Build game completion flow
-        - Create "My Games" dashboard section
-        - Implement game reminders (email)
-        - Add pending approvals notifications
-        - Build waitlist functionality (if time)
-      </tasks>
-    </week_4>
-
-    <week_5>
-      <title>Payments Integration</title>
-      <tasks>
-        - Set up Stripe Connect account
-        - Implement payment intent creation
-        - Build Stripe Elements payment form
-        - Create webhook handler for payment events
-        - Implement refund logic
-        - Build payment history page
-        - Add platform fee calculation
-        - Create payment confirmation emails
-        - Test full payment flow
-      </tasks>
-    </week_5>
-
-    <week_6>
-      <title>Rating System</title>
-      <tasks>
-        - Build post-game rating prompt
-        - Create player rating modal/page
-        - Implement rating submission API
-        - Build rating aggregation logic
-        - Update player profiles with ratings
-        - Create venue rating system
-        - Build "Games to Rate" list
-        - Implement rating display components
-        - Add reliability score calculation
-      </tasks>
-    </week_6>
-
-    <week_7>
-      <title>Venues and Polish</title>
-      <tasks>
-        - Build venue registration flow
-        - Create venue listing page
+        - Build player profile view page
+        - Build player profile edit page
+        - Implement skill level selector component
+        - Build position selection component
+        - Create avatar upload (local storage)
+        - Build venue listing page with cards
         - Build venue detail page
-        - Implement venue search by location
-        - Add venue photo gallery
-        - Create venue ratings display
-        - Build basic venue dashboard
-        - Add map integration for venues
-        - Polish responsive design
+        - Implement Leaflet map (no API key)
+        - Add venue favouriting functionality
+        - Create "My Favourites" section
       </tasks>
-    </week_7>
+      <deliverable>
+        Players can view/edit profiles, browse venues,
+        view venue details on map, and favourite venues.
+      </deliverable>
+    </phase_2_player_profiles>
 
-    <week_8>
-      <title>Final Polish and Launch Prep</title>
+    <phase_3_interest_system>
+      <title>Week 3: Interest Registration System</title>
       <tasks>
-        - Comprehensive mobile testing
-        - Accessibility audit and fixes
-        - Performance optimization
-        - Error handling improvements
+        - Build interest registration form
+        - Create interest management page ("My Interests")
+        - Implement interest aggregation API
+        - Build interest progress bar visualization
+        - Show aggregated interest on venue pages
+        - Create "hot spots" discovery feature
+        - Build dashboard with personalized interests
+        - Add recurring vs one-time interest toggle
+        - Implement interest CRUD operations
+      </tasks>
+      <deliverable>
+        Players can register interest in venues/times,
+        see aggregated demand, manage their interests.
+      </deliverable>
+    </phase_3_interest_system>
+
+    <phase_4_game_creation>
+      <title>Week 4: Game Creation + Lobbies</title>
+      <tasks>
+        - Implement automatic game creation service
+        - Build game listing page with filters
+        - Create game lobby interface
+        - Implement join game functionality
+        - Build player list component for lobby
+        - Add game status management
+        - Create "Create Game" form for private games
+        - Implement host approval workflow
+        - Build simple lobby chat
+      </tasks>
+      <deliverable>
+        Games auto-create when interest threshold met,
+        players can join lobbies, hosts can manage private games.
+      </deliverable>
+    </phase_4_game_creation>
+
+    <phase_5_notifications>
+      <title>Week 5: Notifications + Real-time</title>
+      <tasks>
+        - Implement SSE notification system
+        - Build notification center UI
+        - Create notification types and templates
+        - Add notification badge on nav
+        - Implement mark as read functionality
+        - Connect game events to notifications
+        - Add lobby real-time updates
+        - Build demo trigger for notifications
+      </tasks>
+      <deliverable>
+        Real-time notifications for game events,
+        notification center, instant lobby updates.
+      </deliverable>
+    </phase_5_notifications>
+
+    <phase_6_polish>
+      <title>Week 6: Polish + Testing</title>
+      <tasks>
+        - Mobile responsiveness polish
+        - Animation and transition refinement
+        - Error handling and edge cases
         - Loading states and skeletons
         - Empty states design
-        - PWA configuration
-        - SEO meta tags
-        - Create seed data for demo
-        - Beta user onboarding
-        - Production deployment
+        - Comprehensive Puppeteer E2E tests
+        - Performance optimization
+        - Documentation and README
       </tasks>
-    </week_8>
-  </implementation_steps>
+      <deliverable>
+        Polished, fully-tested MVP ready for demo
+        with comprehensive test coverage.
+      </deliverable>
+    </phase_6_polish>
+  </implementation_phases>
+
+  <testing_strategy>
+    <e2e_puppeteer_tests>
+      - test/e2e/01-demo-user.test.ts: Can switch between demo users
+      - test/e2e/02-profile.test.ts: Can view and edit profile
+      - test/e2e/03-venues.test.ts: Can browse and favourite venues
+      - test/e2e/04-interests.test.ts: Can register and manage interests
+      - test/e2e/05-games.test.ts: Can join games and use lobby
+      - test/e2e/06-notifications.test.ts: Receives notifications
+      - test/e2e/07-full-flow.test.ts: Complete flow from interest to game
+    </e2e_puppeteer_tests>
+
+    <test_data_attributes>
+      All interactive elements have data-testid:
+      - data-testid="demo-user-select"
+      - data-testid="venue-card-{id}"
+      - data-testid="favourite-button"
+      - data-testid="interest-form"
+      - data-testid="join-game-button"
+      - data-testid="notification-badge"
+      - data-testid="lobby-chat-input"
+      - data-testid="player-list"
+      etc.
+    </test_data_attributes>
+
+    <api_testing>
+      Each API endpoint has corresponding unit tests.
+      Integration tests for complex flows (interest → game creation).
+      Use Vitest for fast, modern testing.
+    </api_testing>
+
+    <local_testing_setup>
+      All tests run locally without external dependencies:
+      - SQLite database (file-based, no server)
+      - Local file uploads (./uploads directory)
+      - SSE for real-time (no third-party service)
+      - Leaflet maps with OpenStreetMap tiles (free, no API key)
+      - Demo users bypass authentication
+    </local_testing_setup>
+  </testing_strategy>
 
   <success_criteria>
     <functionality>
-      - Users can register, verify email, complete profile
-      - Players can set sports, skill levels, availability
-      - Games can be created, browsed, filtered, joined
-      - Host approval workflow functions correctly
-      - Payments process successfully via Stripe
-      - Ratings can be submitted post-game
-      - Venues can register and be selected for games
-      - Notifications delivered via email
+      ✓ Demo users can be switched without authentication
+      ✓ Players can set profile with skill level and positions
+      ✓ Venues can be browsed, viewed, and favourited
+      ✓ Interest can be registered at venues for specific times
+      ✓ Aggregated interest is visible on venue pages
+      ✓ Games auto-create when interest threshold reached
+      ✓ Players receive notifications and can join lobbies
+      ✓ Private games can be created with host approval
+      ✓ All features work without external API keys
+      ✓ Database can be reset to clean state for testing
     </functionality>
 
     <user_experience>
-      - Pages load in under 2 seconds
-      - Mobile experience is native-like
-      - Forms have clear validation feedback
-      - Navigation is intuitive on all devices
-      - Error states are helpful and actionable
-      - Empty states guide users to take action
+      ✓ Mobile-first design works beautifully on phones
+      ✓ Smooth animations and transitions (60fps)
+      ✓ Intuitive navigation with bottom tabs
+      ✓ Clear feedback for all actions (toasts, loading)
+      ✓ Fast interactions (<100ms response feel)
     </user_experience>
 
-    <business_metrics>
-      - 100+ players registered
-      - 5+ venues onboarded
-      - 20+ games created per week
-      - 70%+ game fill rate
-      - 60%+ rating completion rate
-      - Less than 5% API error rate
-    </business_metrics>
+    <testing>
+      ✓ All E2E tests pass in Puppeteer
+      ✓ Can reset database to known state
+      ✓ Predictable demo data for assertions
+      ✓ No flaky tests due to external dependencies
+      ✓ Tests run completely offline
+    </testing>
 
-    <technical_quality>
-      - TypeScript strict mode with no errors
-      - Row Level Security on all tables
-      - All API endpoints require authentication where needed
-      - Input validation on client and server
-      - Responsive design tested on common devices
-      - Core Web Vitals in green range
-    </technical_quality>
+    <code_quality>
+      ✓ TypeScript strict mode with no errors
+      ✓ Shared types between frontend and backend
+      ✓ Consistent code style (ESLint + Prettier)
+      ✓ Clean separation of concerns
+      ✓ Well-documented API endpoints
+    </code_quality>
   </success_criteria>
 
-  <future_phases>
-    <phase_2_enhanced_matching>
-      - Smart game suggestions algorithm
-      - Push notifications
-      - Waitlist with auto-promotion
-      - One-click recurring games
-      - Calendar integration (Google/Apple)
-      - Friend/favorite players feature
-    </phase_2_enhanced_matching>
+  <future_considerations>
+    <when_adding_auth>
+      - Replace demo user system with Supabase Auth
+      - Add login/register flows
+      - Implement proper session management
+      - Add password reset, email verification
+      - Migrate to Supabase PostgreSQL
+    </when_adding_auth>
 
-    <phase_3_gamification>
-      - Detailed player stats dashboard
-      - Achievement badges
-      - Local leaderboards
-      - Skill progression tracking
-      - Verified skill levels
-    </phase_3_gamification>
+    <when_adding_payments>
+      - Add Stripe Connect integration
+      - Implement booking payments
+      - Add refund policies
+      - Create payment history
+    </when_adding_payments>
 
-    <phase_4_venue_marketplace>
-      - Venue bidding system
-      - Premium venue listings
-      - Integrated booking system
-      - Equipment rental add-ons
-    </phase_4_venue_marketplace>
+    <when_adding_more_sports>
+      - Make sport a selectable entity
+      - Sport-specific settings (team sizes, positions)
+      - Multi-sport interests per player
+      - Sport filtering throughout UI
+    </when_adding_more_sports>
 
-    <phase_5_teams_and_leagues>
-      - Permanent team creation
-      - Team management
-      - League and tournament system
-      - In-app messaging
-      - Social feed
-    </phase_5_teams_and_leagues>
-  </future_phases>
+    <when_going_native>
+      - Wrap with Capacitor
+      - Add push notifications (Firebase/OneSignal)
+      - Implement deep linking
+      - Add native gestures
+      - Submit to app stores
+    </when_going_native>
+
+    <when_adding_location_services>
+      - Add geolocation for "near me" features
+      - Implement distance-based sorting
+      - Add Google Maps API for better maps
+      - Location-based notifications
+    </when_adding_location_services>
+  </future_considerations>
+
+  <seed_data>
+    <demo_venues>
+      - Central Park Football Pitch (lat: 51.5074, lng: -0.1278)
+        - 5-a-side, astro turf, floodlights
+        - Min players: 8, Max: 12
+        - Amenities: parking, changing rooms, water fountain
+      
+      - Riverside FC (lat: 51.4995, lng: -0.1248)
+        - 7-a-side, grass
+        - Min players: 10, Max: 16
+        - Amenities: parking, showers, cafe
+      
+      - Hackney Sports Ground (lat: 51.5450, lng: -0.0553)
+        - 11-a-side, grass
+        - Min players: 16, Max: 24
+        - Amenities: parking, changing rooms, referee room
+      
+      - Indoor Soccer Arena (lat: 51.5155, lng: -0.1410)
+        - 5-a-side, indoor
+        - Min players: 8, Max: 12
+        - Amenities: changing rooms, viewing gallery, vending
+    </demo_venues>
+
+    <demo_interests>
+      Pre-seed 8-9 interests at Central Park for Saturday afternoon
+      to make threshold nearly reached for demo purposes.
+    </demo_interests>
+  </seed_data>
 </project_specification>

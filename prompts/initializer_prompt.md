@@ -124,12 +124,26 @@ Base the script on the technology stack specified in `app_spec.txt`.
 
 ### NEXT TASK: Initialize Git
 
-Create a git repository and make your first commit with:
+NOTE: The harness has already initialized git for you.
+Verify it's working:
+
+```bash
+git status
+```
+
+Make your first commit with project setup files:
 - init.sh (environment setup script)
 - README.md (project overview and setup instructions)
-- Any initial project structure files
+- Initial project structure
 
-Commit message: "Initial setup: project structure and init script"
+Use this commit message format:
+```bash
+git add .
+git commit -m "Initial setup: project structure and init script"
+```
+
+IMPORTANT: After you complete each Linear issue in future sessions,
+commits will be verified automatically. Just focus on implementation!
 
 ### NEXT TASK: Create Project Structure
 
@@ -148,7 +162,7 @@ Create a file called `.linear_project.json` with the following information:
   "project_id": "[ID of the Linear project you created]",
   "project_name": "[Name of the project from app_spec.txt]",
   "meta_issue_id": "[ID of the META issue you created]",
-  "total_issues": 50,
+  "total_issues": 100,
   "notes": "Project initialized by initializer agent"
 }
 ```
@@ -175,14 +189,14 @@ Before your context fills up:
    ## Session 1 Complete - Initialization
 
    ### Accomplished
-   - Created 50 Linear issues from app_spec.txt
+   - Created 100 Linear issues from app_spec.txt
    - Set up project structure
    - Created init.sh
    - Initialized git repository
    - [Any features started/completed]
 
    ### Linear Status
-   - Total issues: 50
+   - Total issues: 100
    - Done: X
    - In Progress: Y
    - Todo: Z

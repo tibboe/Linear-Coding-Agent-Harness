@@ -160,6 +160,105 @@ my_project/
 └── [application files]       # Generated application code
 ```
 
+## Git Integration
+
+The agent automatically manages git commits for your generated project.
+
+### Understanding Directory Structure
+
+**IMPORTANT**: The agent's git repository is in the **generated project directory**, NOT in the harness directory.
+
+```
+Linear-Coding-Agent-Harness/     ← Harness repo (what you probably have open)
+├── agent.py
+├── autonomous_agent_demo.py
+└── generations/                  ← Generated projects directory
+    └── my_project/               ← YOUR GIT REPO IS HERE
+        ├── .git/                 ← Git repository
+        ├── .linear_project.json
+        ├── app_spec.txt
+        ├── init.sh
+        └── [application code]    ← Agent creates commits here
+```
+
+### How Git Integration Works
+
+1. **Initialization**: Git repository is created automatically when you start a new project
+2. **Automatic Verification**: The harness checks git status after each session
+3. **Commit Timing**: Agent commits after implementing each Linear issue
+4. **Commit Format**: Includes Linear issue ID for traceability
+
+### Viewing Git History
+
+**Option 1: Open Project in Cursor/VS Code**
+```
+File → Open Folder → [Navigate to generations/my_project]
+```
+
+Then use the Source Control tab to see commits.
+
+**Option 2: Terminal**
+```bash
+cd generations/my_project
+git log --oneline -20
+git status
+git diff
+```
+
+### Commit Message Format
+
+The agent creates commits with this format:
+
+```
+Implement [Feature Name]
+
+[Optional implementation details]
+
+Linear issue: TIB-57
+Issue: https://linear.app/team/issue/TIB-57
+```
+
+### Setting Up GitHub Remote
+
+After creating a GitHub repository manually:
+
+```bash
+# Use the helper script
+python setup_git_remote.py \
+    --project-dir ./generations/my_project \
+    --remote-url https://github.com/username/repo.git
+
+# Then push
+cd generations/my_project
+git push -u origin main
+```
+
+Or manually:
+```bash
+cd generations/my_project
+git remote add origin https://github.com/username/repo.git
+git push -u origin main
+```
+
+**Note**: The agent only commits locally. You manually push to GitHub when ready.
+
+### Troubleshooting Git
+
+**"I don't see any commits in Cursor"**
+- You're probably viewing the harness directory, not the generated project
+- Open `generations/my_project/` as a separate folder in Cursor
+- The git repository is in the generated project, not the harness
+
+**"Agent didn't commit"**
+- The harness verifies git status after each session
+- If uncommitted changes are detected, you'll see a warning
+- You can commit manually: `cd generations/my_project && git add . && git commit`
+
+**"How do I sync with my team?"**
+- Set up a GitHub remote (see above)
+- Push manually: `cd generations/my_project && git push`
+- The agent continues committing locally; you push when ready
+
 ## MCP Servers Used
 
 | Server | Transport | Purpose |

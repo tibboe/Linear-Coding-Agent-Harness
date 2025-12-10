@@ -30,6 +30,28 @@ git log --oneline -20
 Understanding the `app_spec.txt` is critical - it contains the full requirements
 for the application you're building.
 
+### LINEAR QUERY BEST PRACTICES ⚠️
+
+**IMPORTANT**: When querying Linear issues, use small limits to avoid timeouts:
+
+- **Use small limits (10-20)** for initial queries and exploratory searches
+- **Filter by specific criteria** to reduce results (state, assignee, labels, etc.)
+- **Avoid fetching all issues at once** - query in batches if you need many issues
+- **Large queries (limit > 100) can timeout** - the Linear API may hang or fail
+
+**Example of a GOOD query:**
+```python
+mcp__linear__list_issues(project=project_id, state='Todo', limit=10)
+```
+
+**Example of a BAD query (can timeout):**
+```python
+mcp__linear__list_issues(project=project_id, state='Done', limit=250)  # TOO MANY
+```
+
+If you need to count all completed issues, query in smaller batches and count them,
+or use filtering to get specific subsets rather than fetching everything at once.
+
 ### STEP 2: CHECK LINEAR STATUS
 
 Query Linear to understand current project state. The `.linear_project.json` file
@@ -167,16 +189,22 @@ After thorough verification:
 
 ### STEP 10: COMMIT YOUR PROGRESS
 
-Make a descriptive git commit:
+After verifying and updating Linear, commit your changes:
+
 ```bash
 git add .
-git commit -m "Implement [feature name]
+git commit -m "Implement [feature name from Linear issue]
 
-- Added [specific changes]
+- [Key implementation details]
 - Tested with browser automation
-- Linear issue: [issue identifier]
+- Linear issue: [issue ID]
 "
 ```
+
+The harness will verify commits after each session.
+If you forget to commit, you'll see a warning.
+
+Include the Linear issue ID in every commit message for traceability.
 
 ### STEP 11: UPDATE META ISSUE
 

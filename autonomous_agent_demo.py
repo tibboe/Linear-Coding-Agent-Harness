@@ -15,9 +15,12 @@ Example Usage:
 import argparse
 import asyncio
 import os
+import signal
+import sys
 from pathlib import Path
 
 from agent import run_autonomous_agent
+from logger import install_logger
 
 
 # Configuration
@@ -75,9 +78,28 @@ Environment Variables:
     return parser.parse_args()
 
 
+def setup_signal_handlers(project_dir: Path):
+    """Set up signal handlers for graceful shutdown."""
+    def signal_handler(signum, frame):
+        print("\n\n⚠ Interrupt received!")
+        print("Shutting down gracefully...")
+        print(f"\nProject state saved in: {project_dir.resolve()}")
+        print("You can resume by running the script again.")
+        print("\nIf a tool was hung, consider:")
+        print("- Checking MCP server health")
+        print("- Reducing query limits (avoid limit > 100)")
+        print("- Filing a bug report with the log")
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+
 def main() -> None:
     """Main entry point."""
     args = parse_args()
+
+    # Install timestamped logger FIRST (before any output)
+    install_logger()
 
     # Check for Claude Code OAuth token
     if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
@@ -105,6 +127,9 @@ def main() -> None:
         else:
             # Prepend generations/ to relative paths
             project_dir = Path("generations") / project_dir
+
+    # Set up signal handlers for graceful shutdown
+    setup_signal_handlers(project_dir)
 
     # Run the agent
     try:

@@ -79,3 +79,53 @@ def print_progress_summary(project_dir: Path) -> None:
     print(f"  Total issues created: {total}")
     print(f"  META issue ID: {meta_issue}")
     print(f"  (Check Linear for current Done/In Progress/Todo counts)")
+
+    # Add git status
+    from git_operations import get_git_status
+    git_status = get_git_status(project_dir)
+    if git_status['initialized'] and git_status['last_commit_hash']:
+        print(f"\nGit Status:")
+        print(f"  Last commit: {git_status['last_commit_hash'][:8]}")
+
+
+def print_git_guidance(project_dir: Path) -> None:
+    """
+    Print guidance about where to find git changes.
+
+    Helps users understand that commits happen in the generated
+    project directory, not the harness directory.
+
+    Args:
+        project_dir: Path to project directory
+    """
+    from git_operations import get_git_status
+
+    print("\n" + "=" * 70)
+    print("  GIT REPOSITORY LOCATION")
+    print("=" * 70)
+    print(f"\nYour git repository is at:")
+    print(f"  📁 {project_dir.resolve()}")
+    print(f"\n⚠ This is NOT the harness directory you may have open in your editor.")
+    print(f"\nTo view git history in Cursor/VS Code:")
+    print(f"  File → Open Folder → {project_dir.resolve()}")
+    print(f"\nTo view git history in terminal:")
+    print(f"  cd {project_dir.resolve()}")
+    print(f"  git log --oneline -20")
+    print(f"  git status")
+
+    status = get_git_status(project_dir)
+    if status['initialized']:
+        print(f"\n📊 Git Status:")
+        print(f"  ✓ Repository initialized")
+        print(f"  Branch: {status['branch']}")
+        if status['last_commit_hash']:
+            print(f"  Last commit: {status['last_commit_hash'][:8]} - {status['last_commit_message'][:50]}...")
+        if status['uncommitted_changes']:
+            print(f"  ⚠ Uncommitted changes present")
+        else:
+            print(f"  ✓ Working tree clean")
+    else:
+        print(f"\n⚠ Git not initialized yet")
+        print(f"  The agent will initialize it in the first session")
+
+    print("=" * 70 + "\n")
